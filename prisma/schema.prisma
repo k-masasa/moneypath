@@ -17,6 +17,7 @@ datasource db {
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
+  password  String
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -25,6 +26,8 @@ model User {
   expenses     Expense[]
   debts        Debt[]
   goals        Goal[]
+  categories   Category[]
+  transactions Transaction[]
 }
 
 // 収入
@@ -82,4 +85,41 @@ model Goal {
   updatedAt    DateTime @updatedAt
 
   @@index([userId])
+}
+
+// カテゴリー（科目）
+model Category {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  type      String   // "income" or "expense"
+  color     String?  // カラーコード（UI用）
+  icon      String?  // アイコン（絵文字など）
+  order     Int      @default(0) // 表示順序
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transactions Transaction[]
+
+  @@index([userId])
+  @@index([userId, type])
+}
+
+// トランザクション（家計簿エントリー）
+model Transaction {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  amount      Decimal  @db.Decimal(10, 2)
+  description String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([userId, date])
+  @@index([categoryId])
 }

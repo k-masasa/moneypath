@@ -10,6 +10,8 @@ services:
     environment:
       - DATABASE_URL=mysql://moneypath:moneypath_password@db:3306/moneypath
       - NODE_ENV=development
+      - AUTH_SECRET=your-secret-key-change-this-in-production-please-use-openssl-rand-base64-32
+      - AUTH_URL=http://localhost:3000
     volumes:
       - .:/app
       - /app/node_modules
