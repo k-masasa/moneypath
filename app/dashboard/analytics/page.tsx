@@ -170,19 +170,64 @@ export default function AnalyticsPage() {
       <header className="border-b bg-background">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
-                MoneyPath
-              </Link>
-              <h1 className="text-xl text-muted-foreground">
-                分析・グラフ
-              </h1>
-            </div>
+            <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
+              MoneyPath
+            </Link>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">分析・グラフ</h1>
+
+        {/* 収支バランスバー */}
+        {data && data.summary.totalIncome > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>収入に対する支出</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-medium">
+                    収入: <span className="text-green-600 dark:text-green-500">{formatCurrency(data.summary.totalIncome)}</span>
+                  </span>
+                  <span className="font-medium">
+                    支出: <span className="text-red-600 dark:text-red-500">{formatCurrency(data.summary.totalExpense)}</span>
+                  </span>
+                  <span className="font-medium">
+                    余剰: <span className={data.summary.balance >= 0 ? "text-green-600 dark:text-green-500" : "text-red-600 dark:text-red-500"}>
+                      {formatCurrency(data.summary.balance)}
+                    </span>
+                  </span>
+                </div>
+
+                {/* プログレスバー */}
+                <div className="relative h-12 bg-green-100 dark:bg-green-900/30 rounded-lg overflow-hidden">
+                  <div
+                    className="absolute h-full bg-red-500 dark:bg-red-600 transition-all"
+                    style={{ width: `${Math.min((data.summary.totalExpense / data.summary.totalIncome) * 100, 100)}%` }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-bold text-foreground mix-blend-difference">
+                      {((data.summary.totalExpense / data.summary.totalIncome) * 100).toFixed(1)}% 使用
+                      {data.summary.balance >= 0 &&
+                        ` / ${((data.summary.balance / data.summary.totalIncome) * 100).toFixed(1)}% 余剰`
+                      }
+                    </span>
+                  </div>
+                </div>
+
+                {data.summary.totalExpense > data.summary.totalIncome && (
+                  <p className="text-sm text-red-600 dark:text-red-500">
+                    ⚠️ 収入を超えて支出しています
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 期間選択 */}
         <Card className="mb-6">
           <CardHeader>
@@ -321,7 +366,7 @@ export default function AnalyticsPage() {
                           cy="50%"
                           labelLine={false}
                           label={({ name, percent }) =>
-                            `${name} ${(percent * 100).toFixed(0)}%`
+                            `${name} ${((percent || 0) * 100).toFixed(0)}%`
                           }
                           outerRadius={80}
                           fill="#8884d8"
@@ -395,8 +440,13 @@ export default function AnalyticsPage() {
                               {formatCurrency(stat.totalAmount)}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {((stat.totalAmount / data.summary.totalExpense) * 100).toFixed(1)}%
+                              支出の {((stat.totalAmount / data.summary.totalExpense) * 100).toFixed(1)}%
                             </div>
+                            {data.summary.totalIncome > 0 && (
+                              <div className="text-xs text-muted-foreground">
+                                収入の {((stat.totalAmount / data.summary.totalIncome) * 100).toFixed(1)}%
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -431,7 +481,7 @@ export default function AnalyticsPage() {
                               {formatCurrency(stat.totalAmount)}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                              {((stat.totalAmount / data.summary.totalIncome) * 100).toFixed(1)}%
+                              収入の {((stat.totalAmount / data.summary.totalIncome) * 100).toFixed(1)}%
                             </div>
                           </div>
                         </div>

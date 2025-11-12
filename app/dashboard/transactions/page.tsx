@@ -144,14 +144,9 @@ export default function TransactionsPage() {
       <header className="border-b bg-background">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
-                MoneyPath
-              </Link>
-              <h1 className="text-xl text-muted-foreground">
-                家計簿入力
-              </h1>
-            </div>
+            <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
+              MoneyPath
+            </Link>
             <div className="flex items-center gap-4">
               <Link href="/dashboard/categories">
                 <Button variant="ghost" size="sm">
@@ -164,6 +159,7 @@ export default function TransactionsPage() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">家計簿入力</h1>
         {categories.length === 0 ? (
           <Card className="mb-6 border-destructive/50 bg-destructive/10">
             <CardHeader>

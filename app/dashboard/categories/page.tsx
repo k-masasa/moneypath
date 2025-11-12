@@ -163,19 +163,15 @@ export default function CategoriesPage() {
       <header className="border-b bg-background">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
-                MoneyPath
-              </Link>
-              <h1 className="text-xl text-muted-foreground">
-                カテゴリー管理
-              </h1>
-            </div>
+            <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
+              MoneyPath
+            </Link>
           </div>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">カテゴリー管理</h1>
         {/* アクションボタン */}
         <div className="mb-6 flex gap-4">
           <Button
