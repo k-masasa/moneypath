@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Category = {
   id: string;
@@ -13,25 +17,25 @@ type Category = {
 };
 
 const DEFAULT_CATEGORIES = [
-  { name: "収入", type: "income" as const, icon: "💰", order: 0 },
-  { name: "食費", type: "expense" as const, icon: "🍽️", order: 1 },
-  { name: "食費 (Uber)", type: "expense" as const, icon: "🚗", order: 2 },
-  { name: "ビール", type: "expense" as const, icon: "🍺", order: 3 },
-  { name: "交通費", type: "expense" as const, icon: "🚃", order: 4 },
-  { name: "服・靴", type: "expense" as const, icon: "👔", order: 5 },
-  { name: "美容", type: "expense" as const, icon: "💅", order: 6 },
-  { name: "日用品", type: "expense" as const, icon: "🧴", order: 7 },
-  { name: "家賃", type: "expense" as const, icon: "🏠", order: 8 },
-  { name: "スマホ代", type: "expense" as const, icon: "📱", order: 9 },
-  { name: "ペット", type: "expense" as const, icon: "🐕", order: 10 },
-  { name: "仕事ツール", type: "expense" as const, icon: "💼", order: 11 },
-  { name: "娯楽", type: "expense" as const, icon: "🎮", order: 12 },
-  { name: "国民健康保険", type: "expense" as const, icon: "🏥", order: 13 },
-  { name: "市民税", type: "expense" as const, icon: "🏛️", order: 14 },
-  { name: "電気代", type: "expense" as const, icon: "⚡", order: 15 },
-  { name: "貯金", type: "expense" as const, icon: "🏦", order: 16 },
-  { name: "送金", type: "expense" as const, icon: "💸", order: 17 },
-  { name: "その他", type: "expense" as const, icon: "📦", order: 18 },
+  { name: "収入", type: "income" as const, order: 0 },
+  { name: "食費", type: "expense" as const, order: 1 },
+  { name: "食費 (Uber)", type: "expense" as const, order: 2 },
+  { name: "ビール", type: "expense" as const, order: 3 },
+  { name: "交通費", type: "expense" as const, order: 4 },
+  { name: "服・靴", type: "expense" as const, order: 5 },
+  { name: "美容", type: "expense" as const, order: 6 },
+  { name: "日用品", type: "expense" as const, order: 7 },
+  { name: "家賃", type: "expense" as const, order: 8 },
+  { name: "スマホ代", type: "expense" as const, order: 9 },
+  { name: "ペット", type: "expense" as const, order: 10 },
+  { name: "仕事ツール", type: "expense" as const, order: 11 },
+  { name: "娯楽", type: "expense" as const, order: 12 },
+  { name: "国民健康保険", type: "expense" as const, order: 13 },
+  { name: "市民税", type: "expense" as const, order: 14 },
+  { name: "電気代", type: "expense" as const, order: 15 },
+  { name: "貯金", type: "expense" as const, order: 16 },
+  { name: "送金", type: "expense" as const, order: 17 },
+  { name: "その他", type: "expense" as const, order: 18 },
 ];
 
 export default function CategoriesPage() {
@@ -42,7 +46,6 @@ export default function CategoriesPage() {
   const [formData, setFormData] = useState({
     name: "",
     type: "expense" as "income" | "expense",
-    icon: "",
     order: 0,
   });
 
@@ -109,7 +112,7 @@ export default function CategoriesPage() {
       await fetchCategories();
       setShowForm(false);
       setEditingCategory(null);
-      setFormData({ name: "", type: "expense", icon: "", order: 0 });
+      setFormData({ name: "", type: "expense", order: 0 });
     } catch (error) {
       console.error("Submit error:", error);
       alert("カテゴリーの保存に失敗しました");
@@ -121,7 +124,6 @@ export default function CategoriesPage() {
     setFormData({
       name: category.name,
       type: category.type,
-      icon: category.icon || "",
       order: category.order,
     });
     setShowForm(true);
@@ -148,19 +150,18 @@ export default function CategoriesPage() {
   const incomeCategories = categories.filter((c) => c.type === "income");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/30">
       {/* ヘッダー */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="border-b bg-background">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold">
               カテゴリー管理
             </h1>
-            <Link
-              href="/dashboard"
-              className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-            >
-              ← ダッシュボードに戻る
+            <Link href="/dashboard">
+              <Button variant="ghost">
+                ← ダッシュボードに戻る
+              </Button>
             </Link>
           </div>
         </div>
@@ -169,166 +170,145 @@ export default function CategoriesPage() {
       <div className="container mx-auto px-4 py-8">
         {/* アクションボタン */}
         <div className="mb-6 flex gap-4">
-          <button
+          <Button
             onClick={() => {
               setShowForm(true);
               setEditingCategory(null);
-              setFormData({ name: "", type: "expense", icon: "", order: 0 });
+              setFormData({ name: "", type: "expense", order: 0 });
             }}
-            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
           >
             + 新規カテゴリー
-          </button>
+          </Button>
 
           {categories.length === 0 && !loading && (
-            <button
+            <Button
               onClick={initializeDefaultCategories}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
+              variant="secondary"
             >
               デフォルトカテゴリーを作成
-            </button>
+            </Button>
           )}
         </div>
 
         {/* フォーム */}
         {showForm && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              {editingCategory ? "カテゴリー編集" : "新規カテゴリー"}
-            </h3>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    カテゴリー名
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                  />
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>
+                {editingCategory ? "カテゴリー編集" : "新規カテゴリー"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">カテゴリー名</Label>
+                    <Input
+                      id="name"
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="type">タイプ</Label>
+                    <select
+                      id="type"
+                      value={formData.type}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          type: e.target.value as "income" | "expense",
+                        })
+                      }
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <option value="expense">支出</option>
+                      <option value="income">収入</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="order">表示順序</Label>
+                    <Input
+                      id="order"
+                      type="number"
+                      value={formData.order}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          order: parseInt(e.target.value) || 0,
+                        })
+                      }
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    タイプ
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        type: e.target.value as "income" | "expense",
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                <div className="flex gap-4">
+                  <Button type="submit">
+                    {editingCategory ? "更新" : "作成"}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditingCategory(null);
+                    }}
                   >
-                    <option value="expense">支出</option>
-                    <option value="income">収入</option>
-                  </select>
+                    キャンセル
+                  </Button>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    アイコン（絵文字）
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.icon}
-                    onChange={(e) =>
-                      setFormData({ ...formData, icon: e.target.value })
-                    }
-                    placeholder="🍽️"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    表示順序
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.order}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        order: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
-                >
-                  {editingCategory ? "更新" : "作成"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingCategory(null);
-                  }}
-                  className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
-                >
-                  キャンセル
-                </button>
-              </div>
-            </form>
-          </div>
+              </form>
+            </CardContent>
+          </Card>
         )}
 
         {/* カテゴリーリスト */}
         {loading ? (
           <div className="text-center py-8">
-            <p className="text-gray-600 dark:text-gray-400">読み込み中...</p>
+            <p className="text-muted-foreground">読み込み中...</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 収入カテゴリー */}
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-xl font-bold mb-4">
                 収入カテゴリー ({incomeCategories.length})
               </h3>
               <div className="space-y-2">
                 {incomeCategories.map((category) => (
-                  <div
-                    key={category.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center justify-between"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <span className="text-2xl">{category.icon || "📁"}</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
+                  <Card key={category.id}>
+                    <CardContent className="flex items-center justify-between p-4">
+                      <span className="font-medium">
                         {category.name}
                       </span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(category)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        編集
-                      </button>
-                      <button
-                        onClick={() => handleDelete(category.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        削除
-                      </button>
-                    </div>
-                  </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(category)}
+                        >
+                          編集
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(category.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
                 {incomeCategories.length === 0 && (
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     収入カテゴリーがありません
                   </p>
                 )}
@@ -337,39 +317,38 @@ export default function CategoriesPage() {
 
             {/* 支出カテゴリー */}
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+              <h3 className="text-xl font-bold mb-4">
                 支出カテゴリー ({expenseCategories.length})
               </h3>
               <div className="space-y-2">
                 {expenseCategories.map((category) => (
-                  <div
-                    key={category.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 flex items-center justify-between"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <span className="text-2xl">{category.icon || "📁"}</span>
-                      <span className="font-medium text-gray-900 dark:text-white">
+                  <Card key={category.id}>
+                    <CardContent className="flex items-center justify-between p-4">
+                      <span className="font-medium">
                         {category.name}
                       </span>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(category)}
-                        className="text-blue-600 hover:text-blue-800 text-sm"
-                      >
-                        編集
-                      </button>
-                      <button
-                        onClick={() => handleDelete(category.id)}
-                        className="text-red-600 hover:text-red-800 text-sm"
-                      >
-                        削除
-                      </button>
-                    </div>
-                  </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit(category)}
+                        >
+                          編集
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDelete(category.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          削除
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
                 ))}
                 {expenseCategories.length === 0 && (
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-muted-foreground text-sm">
                     支出カテゴリーがありません
                   </p>
                 )}

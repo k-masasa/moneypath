@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Category = {
   id: string;
@@ -127,26 +131,24 @@ export default function TransactionsPage() {
   const incomeCategories = categories.filter((c) => c.type === "income");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-muted/30">
       {/* ヘッダー */}
-      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <header className="border-b bg-background">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold">
               家計簿入力
             </h1>
-            <div className="flex items-center space-x-4">
-              <Link
-                href="/dashboard/categories"
-                className="text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                カテゴリー管理
+            <div className="flex items-center gap-4">
+              <Link href="/dashboard/categories">
+                <Button variant="ghost" size="sm">
+                  カテゴリー管理
+                </Button>
               </Link>
-              <Link
-                href="/dashboard"
-                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-              >
-                ← ダッシュボード
+              <Link href="/dashboard">
+                <Button variant="ghost">
+                  ← ダッシュボード
+                </Button>
               </Link>
             </div>
           </div>
@@ -155,196 +157,186 @@ export default function TransactionsPage() {
 
       <div className="container mx-auto px-4 py-8">
         {categories.length === 0 ? (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-              カテゴリーが未設定です
-            </h3>
-            <p className="text-yellow-700 dark:text-yellow-300 mb-4">
-              家計簿を記録する前に、カテゴリーを作成してください。
-            </p>
-            <Link
-              href="/dashboard/categories"
-              className="inline-block bg-yellow-600 text-white px-6 py-2 rounded-lg hover:bg-yellow-700 transition"
-            >
-              カテゴリー管理へ
-            </Link>
-          </div>
+          <Card className="mb-6 border-destructive/50 bg-destructive/10">
+            <CardHeader>
+              <CardTitle>カテゴリーが未設定です</CardTitle>
+              <CardDescription>
+                家計簿を記録する前に、カテゴリーを作成してください。
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/dashboard/categories">
+                <Button>
+                  カテゴリー管理へ
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         ) : (
           <>
             {/* 入力ボタン */}
             <div className="mb-6">
-              <button
+              <Button
                 onClick={() => setShowForm(!showForm)}
-                className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition text-lg font-semibold"
+                size="lg"
               >
                 {showForm ? "入力フォームを閉じる" : "+ 新規記録"}
-              </button>
+              </Button>
             </div>
 
             {/* 入力フォーム */}
             {showForm && (
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  新規記録
-                </h3>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        カテゴリー
-                      </label>
-                      <select
-                        required
-                        value={formData.categoryId}
-                        onChange={(e) =>
-                          setFormData({ ...formData, categoryId: e.target.value })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+              <Card className="mb-8">
+                <CardHeader>
+                  <CardTitle>新規記録</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="md:col-span-2 space-y-2">
+                        <Label htmlFor="categoryId">カテゴリー</Label>
+                        <select
+                          id="categoryId"
+                          required
+                          value={formData.categoryId}
+                          onChange={(e) =>
+                            setFormData({ ...formData, categoryId: e.target.value })
+                          }
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <option value="">選択してください</option>
+                          {incomeCategories.length > 0 && (
+                            <optgroup label="収入">
+                              {incomeCategories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                          {expenseCategories.length > 0 && (
+                            <optgroup label="支出">
+                              {expenseCategories.map((cat) => (
+                                <option key={cat.id} value={cat.id}>
+                                  {cat.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="amount">金額</Label>
+                        <Input
+                          id="amount"
+                          type="number"
+                          required
+                          min="0"
+                          step="1"
+                          value={formData.amount}
+                          onChange={(e) =>
+                            setFormData({ ...formData, amount: e.target.value })
+                          }
+                          placeholder="1000"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="date">日付</Label>
+                        <Input
+                          id="date"
+                          type="date"
+                          required
+                          value={formData.date}
+                          onChange={(e) =>
+                            setFormData({ ...formData, date: e.target.value })
+                          }
+                        />
+                      </div>
+
+                      <div className="md:col-span-2 space-y-2">
+                        <Label htmlFor="description">メモ（任意）</Label>
+                        <Input
+                          id="description"
+                          type="text"
+                          value={formData.description}
+                          onChange={(e) =>
+                            setFormData({ ...formData, description: e.target.value })
+                          }
+                          placeholder="詳細メモ"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button type="submit">
+                        記録する
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowForm(false)}
                       >
-                        <option value="">選択してください</option>
-                        {incomeCategories.length > 0 && (
-                          <optgroup label="収入">
-                            {incomeCategories.map((cat) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.icon} {cat.name}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                        {expenseCategories.length > 0 && (
-                          <optgroup label="支出">
-                            {expenseCategories.map((cat) => (
-                              <option key={cat.id} value={cat.id}>
-                                {cat.icon} {cat.name}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                      </select>
+                        キャンセル
+                      </Button>
                     </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        金額
-                      </label>
-                      <input
-                        type="number"
-                        required
-                        min="0"
-                        step="1"
-                        value={formData.amount}
-                        onChange={(e) =>
-                          setFormData({ ...formData, amount: e.target.value })
-                        }
-                        placeholder="1000"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        日付
-                      </label>
-                      <input
-                        type="date"
-                        required
-                        value={formData.date}
-                        onChange={(e) =>
-                          setFormData({ ...formData, date: e.target.value })
-                        }
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        メモ（任意）
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.description}
-                        onChange={(e) =>
-                          setFormData({ ...formData, description: e.target.value })
-                        }
-                        placeholder="詳細メモ"
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <button
-                      type="submit"
-                      className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
-                    >
-                      記録する
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowForm(false)}
-                      className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
-                    >
-                      キャンセル
-                    </button>
-                  </div>
-                </form>
-              </div>
+                  </form>
+                </CardContent>
+              </Card>
             )}
 
             {/* 記録リスト */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                最近の記録
-              </h3>
-
-              {loading ? (
-                <p className="text-gray-600 dark:text-gray-400">読み込み中...</p>
-              ) : transactions.length === 0 ? (
-                <p className="text-gray-500">まだ記録がありません</p>
-              ) : (
-                <div className="space-y-2">
-                  {transactions.map((transaction) => (
-                    <div
-                      key={transaction.id}
-                      className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition"
-                    >
-                      <div className="flex items-center space-x-4 flex-1">
-                        <span className="text-2xl">
-                          {transaction.category.icon || "📁"}
-                        </span>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {transaction.category.name}
-                            </span>
-                            <span
-                              className={`text-lg font-bold ${
-                                transaction.category.type === "income"
-                                  ? "text-green-600"
-                                  : "text-red-600"
-                              }`}
-                            >
-                              {transaction.category.type === "income" ? "+" : "-"}
-                              {formatCurrency(transaction.amount)}
-                            </span>
+            <Card>
+              <CardHeader>
+                <CardTitle>最近の記録</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <p className="text-muted-foreground">読み込み中...</p>
+                ) : transactions.length === 0 ? (
+                  <p className="text-muted-foreground">まだ記録がありません</p>
+                ) : (
+                  <div className="space-y-2">
+                    {transactions.map((transaction) => (
+                      <Card key={transaction.id} className="hover:bg-muted/50 transition-colors">
+                        <CardContent className="flex items-center justify-between p-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium">
+                                {transaction.category.name}
+                              </span>
+                              <span
+                                className={`text-lg font-bold ${
+                                  transaction.category.type === "income"
+                                    ? "text-green-600 dark:text-green-500"
+                                    : "text-red-600 dark:text-red-500"
+                                }`}
+                              >
+                                {transaction.category.type === "income" ? "+" : "-"}
+                                {formatCurrency(transaction.amount)}
+                              </span>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {formatDate(transaction.date)}
+                              {transaction.description && ` - ${transaction.description}`}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {formatDate(transaction.date)}
-                            {transaction.description && ` - ${transaction.description}`}
-                          </div>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleDelete(transaction.id)}
-                        className="text-red-600 hover:text-red-800 text-sm ml-4"
-                      >
-                        削除
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDelete(transaction.id)}
+                            className="text-destructive hover:text-destructive ml-4"
+                          >
+                            削除
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </>
         )}
       </div>

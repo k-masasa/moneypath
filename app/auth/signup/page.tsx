@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -34,7 +38,6 @@ export default function SignUpPage() {
         throw new Error(data.error || "登録に失敗しました");
       }
 
-      // 登録成功後、ログインページにリダイレクト
       router.push("/auth/signin?registered=true");
     } catch (err) {
       setError(err instanceof Error ? err.message : "登録に失敗しました");
@@ -44,51 +47,40 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Link href="/" className="text-3xl font-bold text-gray-900 dark:text-white">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-muted/50">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <Link href="/" className="text-2xl font-bold mb-2 inline-block">
             MoneyPath
           </Link>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-            新規アカウント作成
-          </p>
-        </div>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
+          <CardTitle>新規アカウント作成</CardTitle>
+          <CardDescription>
+            メールアドレスとパスワードを入力してください
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            <div className="mb-4 p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="name"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                名前（任意）
-              </label>
-              <input
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">名前（任意）</Label>
+              <Input
                 id="name"
                 type="text"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                メールアドレス
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="email">メールアドレス</Label>
+              <Input
                 id="email"
                 type="email"
                 required
@@ -96,18 +88,12 @@ export default function SignUpPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, email: e.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                パスワード（6文字以上）
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="password">パスワード（6文字以上）</Label>
+              <Input
                 id="password"
                 type="password"
                 required
@@ -116,30 +102,23 @@ export default function SignUpPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, password: e.target.value })
                 }
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-            >
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? "登録中..." : "アカウント作成"}
-            </button>
+            </Button>
           </form>
-
-          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+        </CardContent>
+        <CardFooter className="justify-center">
+          <p className="text-sm text-muted-foreground">
             既にアカウントをお持ちですか？{" "}
-            <Link
-              href="/auth/signin"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline"
-            >
+            <Link href="/auth/signin" className="text-primary hover:underline">
               ログイン
             </Link>
-          </div>
-        </div>
-      </div>
+          </p>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
