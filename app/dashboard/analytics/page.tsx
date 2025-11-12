@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLoading } from "@/components/loading-provider";
 import {
   PieChart,
   Pie,
@@ -62,8 +63,8 @@ const COLORS = [
 ];
 
 export default function AnalyticsPage() {
+  const { startLoading, stopLoading } = useLoading();
   const [data, setData] = useState<AnalyticsData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"week" | "month" | "custom">("month");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
@@ -76,7 +77,7 @@ export default function AnalyticsPage() {
     startDate?: string,
     endDate?: string
   ) => {
-    setLoading(true);
+    startLoading();
     try {
       let start: string;
       let end: string;
@@ -112,7 +113,7 @@ export default function AnalyticsPage() {
     } catch (error) {
       console.error("Failed to fetch analytics:", error);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
@@ -169,14 +170,14 @@ export default function AnalyticsPage() {
       <header className="border-b bg-background">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">
-              分析・グラフ
-            </h1>
-            <Link href="/dashboard">
-              <Button variant="ghost">
-                ← ダッシュボードに戻る
-              </Button>
-            </Link>
+            <div className="flex items-center gap-6">
+              <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
+                MoneyPath
+              </Link>
+              <h1 className="text-xl text-muted-foreground">
+                分析・グラフ
+              </h1>
+            </div>
           </div>
         </div>
       </header>
@@ -237,11 +238,7 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">読み込み中...</p>
-          </div>
-        ) : !data ? (
+        {!data ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">
               データの取得に失敗しました

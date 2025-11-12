@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLoading } from "@/components/loading-provider";
 
 type Category = {
   id: string;
@@ -39,8 +40,8 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export default function CategoriesPage() {
+  const { startLoading, stopLoading } = useLoading();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({
@@ -54,6 +55,7 @@ export default function CategoriesPage() {
   }, []);
 
   const fetchCategories = async () => {
+    startLoading();
     try {
       const response = await fetch("/api/categories");
       const data = await response.json();
@@ -61,12 +63,12 @@ export default function CategoriesPage() {
     } catch (error) {
       console.error("Failed to fetch categories:", error);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
   const initializeDefaultCategories = async () => {
-    setLoading(true);
+    startLoading();
     try {
       for (const category of DEFAULT_CATEGORIES) {
         await fetch("/api/categories", {
@@ -81,12 +83,13 @@ export default function CategoriesPage() {
       console.error("Failed to initialize categories:", error);
       alert("カテゴリーの作成に失敗しました");
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    startLoading();
 
     try {
       if (editingCategory) {
@@ -116,6 +119,8 @@ export default function CategoriesPage() {
     } catch (error) {
       console.error("Submit error:", error);
       alert("カテゴリーの保存に失敗しました");
+    } finally {
+      stopLoading();
     }
   };
 
@@ -132,6 +137,7 @@ export default function CategoriesPage() {
   const handleDelete = async (id: string) => {
     if (!confirm("このカテゴリーを削除しますか？")) return;
 
+    startLoading();
     try {
       const response = await fetch(`/api/categories/${id}`, {
         method: "DELETE",
@@ -143,6 +149,8 @@ export default function CategoriesPage() {
     } catch (error) {
       console.error("Delete error:", error);
       alert("カテゴリーの削除に失敗しました");
+    } finally {
+      stopLoading();
     }
   };
 
@@ -155,14 +163,14 @@ export default function CategoriesPage() {
       <header className="border-b bg-background">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">
-              カテゴリー管理
-            </h1>
-            <Link href="/dashboard">
-              <Button variant="ghost">
-                ← ダッシュボードに戻る
-              </Button>
-            </Link>
+            <div className="flex items-center gap-6">
+              <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
+                MoneyPath
+              </Link>
+              <h1 className="text-xl text-muted-foreground">
+                カテゴリー管理
+              </h1>
+            </div>
           </div>
         </div>
       </header>
@@ -180,7 +188,7 @@ export default function CategoriesPage() {
             + 新規カテゴリー
           </Button>
 
-          {categories.length === 0 && !loading && (
+          {categories.length === 0 && (
             <Button
               onClick={initializeDefaultCategories}
               variant="secondary"
@@ -269,11 +277,7 @@ export default function CategoriesPage() {
         )}
 
         {/* カテゴリーリスト */}
-        {loading ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">読み込み中...</p>
-          </div>
-        ) : (
+        <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 収入カテゴリー */}
             <div>
@@ -292,6 +296,7 @@ export default function CategoriesPage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(category)}
+                          className="cursor-pointer"
                         >
                           編集
                         </Button>
@@ -299,7 +304,7 @@ export default function CategoriesPage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDelete(category.id)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive cursor-pointer"
                         >
                           削除
                         </Button>
@@ -332,6 +337,7 @@ export default function CategoriesPage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleEdit(category)}
+                          className="cursor-pointer"
                         >
                           編集
                         </Button>
@@ -339,7 +345,7 @@ export default function CategoriesPage() {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleDelete(category.id)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive cursor-pointer"
                         >
                           削除
                         </Button>
@@ -355,7 +361,7 @@ export default function CategoriesPage() {
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

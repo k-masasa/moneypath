@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLoading } from "@/components/loading-provider";
 
 type Category = {
   id: string;
@@ -23,9 +24,9 @@ type Transaction = {
 };
 
 export default function TransactionsPage() {
+  const { startLoading, stopLoading } = useLoading();
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     categoryId: "",
@@ -39,6 +40,7 @@ export default function TransactionsPage() {
   }, []);
 
   const fetchData = async () => {
+    startLoading();
     try {
       const [categoriesRes, transactionsRes] = await Promise.all([
         fetch("/api/categories"),
@@ -53,7 +55,7 @@ export default function TransactionsPage() {
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
-      setLoading(false);
+      stopLoading();
     }
   };
 
@@ -65,6 +67,7 @@ export default function TransactionsPage() {
       return;
     }
 
+    startLoading();
     try {
       const response = await fetch("/api/transactions", {
         method: "POST",
@@ -90,12 +93,15 @@ export default function TransactionsPage() {
     } catch (error) {
       console.error("Submit error:", error);
       alert("記録に失敗しました");
+    } finally {
+      stopLoading();
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm("この記録を削除しますか？")) return;
 
+    startLoading();
     try {
       const response = await fetch(`/api/transactions/${id}`, {
         method: "DELETE",
@@ -107,6 +113,8 @@ export default function TransactionsPage() {
     } catch (error) {
       console.error("Delete error:", error);
       alert("削除に失敗しました");
+    } finally {
+      stopLoading();
     }
   };
 
@@ -136,18 +144,18 @@ export default function TransactionsPage() {
       <header className="border-b bg-background">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">
-              家計簿入力
-            </h1>
+            <div className="flex items-center gap-6">
+              <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
+                MoneyPath
+              </Link>
+              <h1 className="text-xl text-muted-foreground">
+                家計簿入力
+              </h1>
+            </div>
             <div className="flex items-center gap-4">
               <Link href="/dashboard/categories">
                 <Button variant="ghost" size="sm">
                   カテゴリー管理
-                </Button>
-              </Link>
-              <Link href="/dashboard">
-                <Button variant="ghost">
-                  ← ダッシュボード
                 </Button>
               </Link>
             </div>
@@ -292,9 +300,7 @@ export default function TransactionsPage() {
                 <CardTitle>最近の記録</CardTitle>
               </CardHeader>
               <CardContent>
-                {loading ? (
-                  <p className="text-muted-foreground">読み込み中...</p>
-                ) : transactions.length === 0 ? (
+                {transactions.length === 0 ? (
                   <p className="text-muted-foreground">まだ記録がありません</p>
                 ) : (
                   <div className="space-y-2">
@@ -326,7 +332,7 @@ export default function TransactionsPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDelete(transaction.id)}
-                            className="text-destructive hover:text-destructive ml-4"
+                            className="text-destructive hover:text-destructive ml-4 cursor-pointer"
                           >
                             削除
                           </Button>
