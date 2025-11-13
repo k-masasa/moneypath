@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useLoading } from "@/components/loading-provider";
 import { useToast } from "@/components/ui/use-toast";
 import { Trash2, HelpCircle, Search, X, Edit } from "lucide-react";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { useSession } from "next-auth/react";
 
 type Category = {
   id: string;
@@ -26,6 +28,7 @@ type Transaction = {
 };
 
 export default function TransactionsPage() {
+  const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoading();
   const { toast } = useToast();
   const amountInputRef = useRef<HTMLInputElement>(null);
@@ -50,6 +53,7 @@ export default function TransactionsPage() {
     description: "",
     date: "",
   });
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [formData, setFormData] = useState({
     categoryId: "",
     amount: "",
@@ -60,6 +64,21 @@ export default function TransactionsPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // カテゴリー取得後、支出の最初のカテゴリーを選択
+    if (categories.length > 0 && !formData.categoryId) {
+      const expenseCategories = categories.filter((c) => c.type === "expense");
+      if (expenseCategories.length > 0) {
+        setFormData({ ...formData, categoryId: expenseCategories[0].id });
+        // カテゴリー設定後、金額欄にフォーカス
+        setTimeout(() => {
+          amountInputRef.current?.focus();
+        }, 100);
+      }
+      setIsInitialLoading(false);
+    }
+  }, [categories]);
 
   useEffect(() => {
     fetchData();
@@ -281,28 +300,18 @@ export default function TransactionsPage() {
   const incomeCategories = categories.filter((c) => c.type === "income");
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* ヘッダー */}
-      <header className="border-b bg-background">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
-              MoneyPath
-            </Link>
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard/categories">
-                <Button variant="ghost" size="sm">
-                  カテゴリー管理
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background">
+      <DashboardHeader userEmail={session?.user?.email || ""} />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="pt-24 container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">家計簿入力</h1>
-        {categories.length === 0 ? (
+        {isInitialLoading ? (
+          <Card className="mb-8">
+            <CardContent className="py-8">
+              <div className="text-center text-muted-foreground">読み込み中...</div>
+            </CardContent>
+          </Card>
+        ) : categories.length === 0 ? (
           <Card className="mb-6 border-destructive/50 bg-destructive/10">
             <CardHeader>
               <CardTitle>カテゴリーが未設定です</CardTitle>

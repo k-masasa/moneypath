@@ -105,9 +105,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
   if (isInitialLoad) {
     return (
-      <div className="min-h-screen bg-muted/30">
+      <div className="min-h-screen bg-background">
         <DashboardHeader userEmail={userEmail} />
-        <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
+        <div className="pt-24 container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
           <div className="flex flex-col items-center gap-4">
             <Wallet className="h-12 w-12 animate-pulse text-primary" />
             <p className="text-sm text-muted-foreground">データを読み込んでいます...</p>
@@ -118,10 +118,10 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       <DashboardHeader userEmail={userEmail} />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="pt-24 container mx-auto px-4 py-8">
         {/* クイック統計 */}
         <Card className="mb-8">
           <CardHeader>
