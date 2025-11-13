@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+@theme {
+  --color-background: oklch(1 0 0);
+  --color-foreground: oklch(0.2 0 0);
+  --color-primary: oklch(0.35 0 0);
+  --color-primary-foreground: oklch(1 0 0);
+  --color-secondary: oklch(0.96 0.02 240);
+  --color-secondary-foreground: oklch(0.2 0.05 240);
+  --color-muted: oklch(0.96 0.02 240);
+  --color-muted-foreground: oklch(0.5 0.02 240);
+  --color-accent: oklch(0.96 0.02 240);
+  --color-accent-foreground: oklch(0.2 0.05 240);
+  --color-destructive: oklch(0.6 0.25 25);
+  --color-destructive-foreground: oklch(0.98 0.02 240);
+  --color-border: oklch(0.92 0.02 240);
+  --color-input: oklch(0.92 0.02 240);
+  --color-ring: oklch(0.35 0 0);
+  --color-card: oklch(1 0 0);
+  --color-card-foreground: oklch(0.2 0 0);
+  --color-popover: oklch(1 0 0);
+  --color-popover-foreground: oklch(0.2 0 0);
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -8,7 +30,7 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 150 60% 50%;
+    --primary: 0 0% 30%;
     --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -20,7 +42,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 150 60% 50%;
+    --ring: 0 0% 30%;
     --radius: 0.5rem;
   }
 
@@ -31,8 +53,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 150 55% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 0 0% 70%;
+    --primary-foreground: 0 0% 10%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -43,7 +65,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 150 55% 55%;
+    --ring: 0 0% 70%;
   }
 }
 

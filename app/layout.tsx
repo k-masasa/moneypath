@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LoadingProvider } from "@/components/loading-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "MoneyPath - お金の道筋を可視化する",
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body className="antialiased">
         <LoadingProvider>
           {children}
+          <Toaster />
         </LoadingProvider>
       </body>
     </html>

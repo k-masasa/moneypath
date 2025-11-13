@@ -28,8 +28,8 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
     <LoadingContext.Provider value={{ startLoading, stopLoading, isLoading }}>
       {children}
       {isLoading && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[9999] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center pointer-events-none">
+          <div className="flex flex-col items-center gap-4 bg-background/90 p-6 rounded-lg shadow-lg">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">読み込み中...</p>
           </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, BarChart3, TrendingDown, FileText, Tag, Target, ChevronLeft, ChevronRight } from "lucide-react";
+import { Wallet, BarChart3, TrendingDown, FileText, Tag, Target, ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { Button } from "@/components/ui/button";
 import { useLoading } from "@/components/loading-provider";
@@ -27,6 +27,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     balance: 0,
     transactionCount: 0,
   });
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // 現在の年月を初期値に
   const now = new Date();
@@ -38,7 +39,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   }, [selectedYear, selectedMonth]);
 
   const fetchMonthlyStats = async () => {
-    startLoading();
+    if (!isInitialLoad) {
+      startLoading();
+    }
     try {
       const startOfMonth = new Date(selectedYear, selectedMonth - 1, 1);
       const endOfMonth = new Date(selectedYear, selectedMonth, 0, 23, 59, 59);
@@ -54,7 +57,11 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     } catch (error) {
       console.error("Failed to fetch monthly stats:", error);
     } finally {
-      stopLoading();
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      } else {
+        stopLoading();
+      }
     }
   };
 
@@ -76,6 +83,17 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     }
   };
 
+  const handleCurrentMonth = () => {
+    const now = new Date();
+    setSelectedYear(now.getFullYear());
+    setSelectedMonth(now.getMonth() + 1);
+  };
+
+  const isCurrentMonth = () => {
+    const now = new Date();
+    return selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1;
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ja-JP", {
       style: "currency",
@@ -85,21 +103,25 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
   const selectedMonthLabel = `${selectedYear}年${selectedMonth}月`;
 
+  if (isInitialLoad) {
+    return (
+      <div className="min-h-screen bg-muted/30">
+        <DashboardHeader userEmail={userEmail} />
+        <div className="container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Wallet className="h-12 w-12 animate-pulse text-primary" />
+            <p className="text-sm text-muted-foreground">データを読み込んでいます...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-muted/30">
       <DashboardHeader userEmail={userEmail} />
 
       <div className="container mx-auto px-4 py-8">
-        {/* ウェルカムセクション */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">
-            ようこそ、{userEmail}さん
-          </h1>
-          <p className="text-muted-foreground">
-            あなたのお金の道筋を管理しましょう
-          </p>
-        </div>
-
         {/* クイック統計 */}
         <Card className="mb-8">
           <CardHeader>
@@ -109,6 +131,17 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                 <CardDescription>収入と支出の概要</CardDescription>
               </div>
               <div className="flex items-center gap-2">
+                {!isCurrentMonth() && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCurrentMonth}
+                    className="cursor-pointer"
+                  >
+                    <Home className="h-4 w-4 mr-1" />
+                    今月
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="icon"

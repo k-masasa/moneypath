@@ -22,6 +22,8 @@ export async function GET(request: Request) {
     const categoryId = searchParams.get("categoryId");
     const startDate = searchParams.get("startDate");
     const endDate = searchParams.get("endDate");
+    const minAmount = searchParams.get("minAmount");
+    const maxAmount = searchParams.get("maxAmount");
     const limit = searchParams.get("limit");
 
     const where: any = { userId: session.user.id };
@@ -40,24 +42,40 @@ export async function GET(request: Request) {
       }
     }
 
-    const transactions = await prisma.transaction.findMany({
-      where,
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true,
-            type: true,
-            color: true,
-            icon: true,
+    if (minAmount || maxAmount) {
+      where.amount = {};
+      if (minAmount) {
+        where.amount.gte = parseFloat(minAmount);
+      }
+      if (maxAmount) {
+        where.amount.lte = parseFloat(maxAmount);
+      }
+    }
+
+    const offset = searchParams.get("offset");
+
+    const [transactions, totalCount] = await Promise.all([
+      prisma.transaction.findMany({
+        where,
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              color: true,
+              icon: true,
+            },
           },
         },
-      },
-      orderBy: { date: "desc" },
-      take: limit ? parseInt(limit) : undefined,
-    });
+        orderBy: { createdAt: "desc" },
+        take: limit ? parseInt(limit) : undefined,
+        skip: offset ? parseInt(offset) : undefined,
+      }),
+      prisma.transaction.count({ where }),
+    ]);
 
-    return NextResponse.json({ transactions });
+    return NextResponse.json({ transactions, totalCount });
   } catch (error) {
     console.error("Get transactions error:", error);
     return NextResponse.json(
