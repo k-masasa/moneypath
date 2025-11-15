@@ -66,7 +66,7 @@ export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
                     </div>
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted cursor-pointer flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-[hsl(var(--hover-bg))] cursor-pointer flex items-center gap-2"
                     >
                       <LogOut className="h-4 w-4" />
                       ログアウト

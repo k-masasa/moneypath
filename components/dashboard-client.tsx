@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, BarChart3, TrendingDown, FileText, Tag, Target, ChevronLeft, ChevronRight, Home } from "lucide-react";
+import { Wallet, BarChart3, TrendingDown, ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { useLoading } from "@/components/loading-provider";
 
@@ -107,7 +108,8 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     return (
       <div className="min-h-screen bg-background">
         <DashboardHeader userEmail={userEmail} />
-        <div className="pt-24 container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
+        <DashboardSidebar />
+        <div className="pt-24 pl-64 container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
           <div className="flex flex-col items-center gap-4">
             <Wallet className="h-12 w-12 animate-pulse text-primary" />
             <p className="text-sm text-muted-foreground">データを読み込んでいます...</p>
@@ -120,8 +122,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader userEmail={userEmail} />
+      <DashboardSidebar />
 
-      <div className="pt-24 container mx-auto px-4 py-8">
+      <div className="pt-24 pl-64 container mx-auto px-4 py-8">
         {/* クイック統計 */}
         <Card className="mb-8">
           <CardHeader>
@@ -221,43 +224,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
             </div>
           </CardContent>
         </Card>
-
-        {/* クイックリンク */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Link href="/dashboard/transactions" className="cursor-pointer">
-            <Card className="hover:shadow-lg transition-shadow text-center p-6">
-              <FileText className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <div className="font-semibold">
-                家計簿入力
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/dashboard/categories" className="cursor-pointer">
-            <Card className="hover:shadow-lg transition-shadow text-center p-6">
-              <Tag className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <div className="font-semibold">
-                カテゴリー管理
-              </div>
-            </Card>
-          </Link>
-
-          <Link href="/dashboard/analytics" className="cursor-pointer">
-            <Card className="hover:shadow-lg transition-shadow text-center p-6">
-              <BarChart3 className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <div className="font-semibold">
-                分析・グラフ
-              </div>
-            </Card>
-          </Link>
-
-          <Card className="opacity-50 text-center p-6 cursor-not-allowed">
-            <Target className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-            <div className="font-semibold text-muted-foreground">
-              目標設定（準備中）
-            </div>
-          </Card>
-        </div>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ import { useLoading } from "@/components/loading-provider";
 import { useToast } from "@/components/ui/use-toast";
 import { Trash2, HelpCircle, Search, X, Edit } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
 
 type Category = {
@@ -302,8 +303,9 @@ export default function TransactionsPage() {
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader userEmail={session?.user?.email || ""} />
+      <DashboardSidebar />
 
-      <div className="pt-24 container mx-auto px-4 py-8">
+      <div className="pt-24 pl-64 container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">家計簿入力</h1>
         {isInitialLoading ? (
           <Card className="mb-8">

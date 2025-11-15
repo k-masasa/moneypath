@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "check": "npm run type-check && npm run build",
+    "check:dev": "curl -s -o /dev/null -w 'HTTP Status: %{http_code}\\n' http://localhost:3000 && echo 'Dev server is running correctly!'",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
