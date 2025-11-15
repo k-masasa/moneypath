@@ -7,6 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoading } from "@/components/loading-provider";
+import { DashboardHeader } from "@/components/dashboard-header";
+import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import { useSession } from "next-auth/react";
 
 type Category = {
   id: string;
@@ -40,6 +43,7 @@ const DEFAULT_CATEGORIES = [
 ];
 
 export default function CategoriesPage() {
+  const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoading();
   const [categories, setCategories] = useState<Category[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -158,24 +162,12 @@ export default function CategoriesPage() {
   const incomeCategories = categories.filter((c) => c.type === "income");
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      {/* ヘッダー */}
-      <header className="border-b bg-background">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="text-2xl font-bold cursor-pointer">
-                MoneyPath
-              </Link>
-              <h1 className="text-xl text-muted-foreground">
-                カテゴリー管理
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background">
+      <DashboardHeader userEmail={session?.user?.email || ""} />
+      <DashboardSidebar />
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="pt-24 pl-64 container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">カテゴリー管理</h1>
         {/* アクションボタン */}
         <div className="mb-6 flex gap-4">
           <Button

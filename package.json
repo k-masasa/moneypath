@@ -8,6 +8,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "check": "npm run type-check && npm run build",
+    "check:dev": "curl -s -o /dev/null -w 'HTTP Status: %{http_code}\\n' http://localhost:3000 && echo 'Dev server is running correctly!'",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
@@ -20,7 +23,9 @@
   "license": "ISC",
   "dependencies": {
     "@prisma/client": "^6.19.0",
+    "@radix-ui/react-toast": "^1.2.15",
     "bcryptjs": "^3.0.3",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
@@ -37,6 +42,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.17",
     "@types/bcryptjs": "^2.4.6",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",

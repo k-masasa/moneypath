@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { LoadingProvider } from "@/components/loading-provider";
+import { SessionProvider } from "@/components/session-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "MoneyPath - お金の道筋を可視化する",
@@ -15,9 +17,12 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body className="antialiased">
-        <LoadingProvider>
-          {children}
-        </LoadingProvider>
+        <SessionProvider>
+          <LoadingProvider>
+            {children}
+            <Toaster />
+          </LoadingProvider>
+        </SessionProvider>
       </body>
     </html>
   );
