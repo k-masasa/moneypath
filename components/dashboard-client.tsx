@@ -39,6 +39,15 @@ type MonthlyTrend = {
   balance: number;
 };
 
+type BalanceData = {
+  hasBalance: boolean;
+  initialBalance?: number;
+  balanceStartDate?: string;
+  totalIncome?: number;
+  totalExpense?: number;
+  currentBalance?: number;
+};
+
 export function DashboardClient({ userEmail }: DashboardClientProps) {
   const { startLoading, stopLoading } = useLoading();
   const [stats, setStats] = useState<MonthlyStats>({
@@ -50,6 +59,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [balanceData, setBalanceData] = useState<BalanceData>({ hasBalance: false });
 
   // 現在の年月を初期値に
   const now = new Date();
@@ -67,6 +77,22 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   useEffect(() => {
     fetchMonthlyTrends();
   }, [trendStartYear, trendStartMonth]);
+
+  useEffect(() => {
+    fetchBalance();
+  }, []);
+
+  const fetchBalance = async () => {
+    try {
+      const response = await fetch("/api/user/balance");
+      if (response.ok) {
+        const data = await response.json();
+        setBalanceData(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch balance:", error);
+    }
+  };
 
   const fetchMonthlyStats = async () => {
     if (!isInitialLoad) {
@@ -260,6 +286,46 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       <DashboardSidebar />
 
       <div className="pt-24 pl-64 container mx-auto px-4 py-8">
+        {/* 現在の資産 */}
+        <Card className="mb-8 border-primary/50 bg-primary/5">
+          <CardHeader>
+            <CardTitle className="text-2xl">現在の資産</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {balanceData.hasBalance ? (
+              <div className="space-y-4">
+                <div className="text-5xl font-bold text-primary">
+                  {formatCurrency(balanceData.currentBalance || 0)}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="space-y-1">
+                    <div className="text-muted-foreground">初期残高</div>
+                    <div className="font-semibold">{formatCurrency(balanceData.initialBalance || 0)}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-muted-foreground">収入</div>
+                    <div className="font-semibold text-green-600">+{formatCurrency(balanceData.totalIncome || 0)}</div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-muted-foreground">支出</div>
+                    <div className="font-semibold text-red-600">-{formatCurrency(balanceData.totalExpense || 0)}</div>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {balanceData.balanceStartDate && `${new Date(balanceData.balanceStartDate).toLocaleDateString('ja-JP')} から計算`}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-muted-foreground mb-4">初期残高が設定されていません</p>
+                <Link href="/settings">
+                  <Button>初期残高を設定する</Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* 12ヶ月トレンドグラフ */}
         {monthlyTrends.length > 0 && (
           <Card className="mb-8">

@@ -11,17 +11,17 @@ const menuItems = [
     icon: Home,
   },
   {
-    href: "/dashboard/transactions",
+    href: "/transactions",
     label: "家計簿入力",
     icon: FileText,
   },
   {
-    href: "/dashboard/categories",
+    href: "/categories",
     label: "カテゴリー管理",
     icon: Tag,
   },
   {
-    href: "/dashboard/goals",
+    href: "/goals",
     label: "目標設定",
     icon: Target,
     disabled: true,

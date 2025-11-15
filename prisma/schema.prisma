@@ -15,12 +15,14 @@ datasource db {
 
 // ユーザーモデル
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id               String    @id @default(uuid())
+  email            String    @unique
+  password         String
+  name             String?
+  initialBalance   Decimal?  @db.Decimal(10, 2) // 初期残高
+  balanceStartDate DateTime? // 残高計算の開始日
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   incomes      Income[]
   expenses     Expense[]
