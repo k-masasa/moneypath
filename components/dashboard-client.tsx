@@ -8,6 +8,7 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { useLoading } from "@/components/loading-provider";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
 interface DashboardClientProps {
   userEmail: string;
@@ -20,6 +21,15 @@ type MonthlyStats = {
   transactionCount: number;
 };
 
+type CategoryStat = {
+  categoryId: string;
+  categoryName: string;
+  categoryType: string;
+  categoryIcon?: string;
+  totalAmount: number;
+  count: number;
+};
+
 export function DashboardClient({ userEmail }: DashboardClientProps) {
   const { startLoading, stopLoading } = useLoading();
   const [stats, setStats] = useState<MonthlyStats>({
@@ -28,6 +38,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     balance: 0,
     transactionCount: 0,
   });
+  const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   // 現在の年月を初期値に
@@ -54,6 +65,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       if (response.ok) {
         const data = await response.json();
         setStats(data.summary);
+        setCategoryStats(data.categoryStats || []);
       }
     } catch (error) {
       console.error("Failed to fetch monthly stats:", error);
@@ -104,6 +116,45 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
   const selectedMonthLabel = `${selectedYear}年${selectedMonth}月`;
 
+  // 収入と支出のカテゴリーを分離
+  const incomeCategories = categoryStats.filter(stat => stat.categoryType === "income");
+  const expenseCategories = categoryStats.filter(stat => stat.categoryType === "expense");
+
+  // 1%未満のカテゴリーを「その他」にまとめる
+  const prepareChartData = (categories: CategoryStat[], total: number) => {
+    const significantCategories: CategoryStat[] = [];
+    const smallCategories: CategoryStat[] = [];
+
+    categories.forEach(category => {
+      const percentage = (category.totalAmount / total) * 100;
+      if (percentage >= 1) {
+        significantCategories.push(category);
+      } else {
+        smallCategories.push(category);
+      }
+    });
+
+    // 「その他」カテゴリーを作成
+    if (smallCategories.length > 0) {
+      const othersTotal = smallCategories.reduce((sum, cat) => sum + cat.totalAmount, 0);
+      const othersCount = smallCategories.reduce((sum, cat) => sum + cat.count, 0);
+      significantCategories.push({
+        categoryId: 'others',
+        categoryName: 'その他',
+        categoryType: 'expense',
+        totalAmount: othersTotal,
+        count: othersCount,
+      });
+    }
+
+    return significantCategories;
+  };
+
+  const chartExpenseCategories = prepareChartData(expenseCategories, stats.totalExpense);
+
+  // 円グラフ用のカラーパレット（グレースケール）
+  const COLORS = ['#2d2d2d', '#4a4a4a', '#6b6b6b', '#8c8c8c', '#adadad', '#cecece', '#efefef'];
+
   if (isInitialLoad) {
     return (
       <div className="min-h-screen bg-background">
@@ -131,7 +182,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle>{selectedMonthLabel}の収支</CardTitle>
-                <CardDescription>収入と支出の概要</CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 {!isCurrentMonth() && (
@@ -168,11 +218,10 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* 収入 */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Wallet className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-sm text-green-600">
                   <span>収入</span>
                 </div>
-                <div className="text-3xl font-bold text-green-600 dark:text-green-500">
+                <div className="text-xl font-bold">
                   {formatCurrency(stats.totalIncome)}
                 </div>
                 {stats.totalIncome === 0 && (
@@ -184,11 +233,10 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
               {/* 支出 */}
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <BarChart3 className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-sm text-red-600">
                   <span>支出</span>
                 </div>
-                <div className="text-3xl font-bold text-red-600 dark:text-red-500">
+                <div className="text-xl font-bold">
                   {formatCurrency(stats.totalExpense)}
                 </div>
                 {stats.totalExpense === 0 && (
@@ -201,29 +249,62 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
               {/* 収支 */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <TrendingDown className="h-4 w-4" />
-                  <span>収支</span>
+                  <span>残金</span>
                 </div>
-                <div className={`text-3xl font-bold ${
-                  stats.balance >= 0
-                    ? "text-green-600 dark:text-green-500"
-                    : "text-red-600 dark:text-red-500"
-                }`}>
+                <div className="text-xl font-bold">
                   {formatCurrency(stats.balance)}
                 </div>
-                {stats.balance >= 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    順調です
-                  </p>
-                ) : (
-                  <p className="text-xs text-red-600 dark:text-red-500">
-                    収入を超えています
-                  </p>
-                )}
               </div>
             </div>
           </CardContent>
         </Card>
+        {/* 支出の内訳 */}
+        {expenseCategories.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-6">
+                {/* 円グラフ */}
+                <div className="w-full h-[800px] flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartExpenseCategories}
+                        dataKey="totalAmount"
+                        nameKey="categoryName"
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={280}
+                        label={(entry: any) => `${entry.categoryName} (${((entry.totalAmount / stats.totalExpense) * 100).toFixed(0)}%)`}
+                      >
+                        {chartExpenseCategories.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* カテゴリーリスト */}
+                <div className="space-y-2">
+                  {expenseCategories.map((category, index) => (
+                    <div key={category.categoryId} className="flex items-center justify-between py-2 border-b last:border-0">
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
+                        <span className="text-sm font-medium">{category.categoryName}</span>
+                        <span className="text-xs text-muted-foreground">({category.count}件)</span>
+                      </div>
+                      <span className="text-sm font-semibold">{formatCurrency(category.totalAmount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
