@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoading } from "@/components/loading-provider";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, HelpCircle, Search, X, Edit } from "lucide-react";
+import { Trash2, HelpCircle, Search, X, Edit, ChevronLeft, ChevronRight } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
+import confetti from "canvas-confetti";
 
 type Category = {
   id: string;
@@ -171,6 +172,14 @@ export default function TransactionsPage() {
         description: `¥${parseFloat(formData.amount).toLocaleString()} を記録しました`,
       });
 
+      // 紙吹雪アニメーション
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#22c55e', '#10b981', '#059669'],
+      });
+
       // 金額欄に再フォーカス
       setTimeout(() => {
         amountInputRef.current?.focus();
@@ -306,7 +315,24 @@ export default function TransactionsPage() {
       <DashboardSidebar />
 
       <div className="pt-24 pl-64 container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">家計簿入力</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold">家計簿入力</h1>
+          <div className="group relative">
+            <HelpCircle className="h-6 w-6 text-muted-foreground cursor-help" />
+            <div className="invisible group-hover:visible absolute right-0 top-8 z-50 w-64 rounded-md bg-popover p-3 text-sm text-popover-foreground shadow-md border">
+              <p className="font-semibold mb-2">使い方</p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>カテゴリーを選択</li>
+                <li>金額を入力</li>
+                <li>必要に応じて日付とメモを入力</li>
+                <li>「記録する」ボタンをクリック</li>
+              </ol>
+              <p className="mt-2 text-xs text-muted-foreground">
+                同じカテゴリーで連続入力できます
+              </p>
+            </div>
+          </div>
+        </div>
         {isInitialLoading ? (
           <Card className="mb-8">
             <CardContent className="py-8">
@@ -334,24 +360,7 @@ export default function TransactionsPage() {
             {/* 入力フォーム */}
             {showForm && (
               <Card className="mb-8">
-                <CardHeader className="relative">
-                  <div className="group absolute top-4 right-4">
-                    <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
-                    <div className="invisible group-hover:visible absolute right-0 top-8 z-50 w-64 rounded-md bg-popover p-3 text-sm text-popover-foreground shadow-md border">
-                      <p className="font-semibold mb-2">使い方</p>
-                      <ol className="list-decimal list-inside space-y-1">
-                        <li>カテゴリーを選択</li>
-                        <li>金額を入力</li>
-                        <li>必要に応じて日付とメモを入力</li>
-                        <li>「記録する」ボタンをクリック</li>
-                      </ol>
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        同じカテゴリーで連続入力できます
-                      </p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {/* カテゴリーチップ */}
                     <div className="space-y-3">
@@ -488,116 +497,19 @@ export default function TransactionsPage() {
               </Card>
             )}
 
-            {/* 検索フィルター */}
-            <Card className="mb-4">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Search className="h-5 w-5" />
-                    検索条件
-                  </CardTitle>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setShowSearch(!showSearch)}
-                  >
-                    {showSearch ? "閉じる" : "開く"}
-                  </Button>
-                </div>
-              </CardHeader>
-              {showSearch && (
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">科目</label>
-                      <select
-                        value={searchFilters.categoryId}
-                        onChange={(e) =>
-                          setSearchFilters({ ...searchFilters, categoryId: e.target.value })
-                        }
-                        className="w-full border rounded px-3 py-2 text-sm"
-                      >
-                        <option value="">すべて</option>
-                        {categories.map((cat) => (
-                          <option key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">金額範囲</label>
-                      <div className="flex gap-2 items-center">
-                        <Input
-                          type="number"
-                          placeholder="最小"
-                          value={searchFilters.minAmount}
-                          onChange={(e) =>
-                            setSearchFilters({ ...searchFilters, minAmount: e.target.value })
-                          }
-                        />
-                        <span>〜</span>
-                        <Input
-                          type="number"
-                          placeholder="最大"
-                          value={searchFilters.maxAmount}
-                          onChange={(e) =>
-                            setSearchFilters({ ...searchFilters, maxAmount: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">開始日</label>
-                      <Input
-                        type="date"
-                        value={searchFilters.startDate}
-                        onChange={(e) =>
-                          setSearchFilters({ ...searchFilters, startDate: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">終了日</label>
-                      <Input
-                        type="date"
-                        value={searchFilters.endDate}
-                        onChange={(e) =>
-                          setSearchFilters({ ...searchFilters, endDate: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setSearchFilters({
-                          categoryId: "",
-                          minAmount: "",
-                          maxAmount: "",
-                          startDate: "",
-                          endDate: "",
-                        });
-                      }}
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      クリア
-                    </Button>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
-
             {/* 記録リスト */}
             <Card>
               <CardHeader>
-                <CardTitle>最近の記録</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle>最近の記録</CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setShowSearch(true)}
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {transactions.length === 0 ? (
@@ -607,9 +519,10 @@ export default function TransactionsPage() {
                     <table className="w-full">
                       <thead>
                         <tr className="border-b">
-                          <th className="text-left py-3 px-4 font-medium text-sm">ID</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm">日付</th>
                           <th className="text-left py-3 px-4 font-medium text-sm">科目</th>
                           <th className="text-right py-3 px-4 font-medium text-sm">金額</th>
+                          <th className="text-left py-3 px-4 font-medium text-sm" style={{ maxWidth: '100px' }}>メモ</th>
                           <th className="text-left py-3 px-4 font-medium text-sm">登録日時</th>
                           <th className="text-center py-3 px-4 font-medium text-sm w-20"></th>
                         </tr>
@@ -617,8 +530,8 @@ export default function TransactionsPage() {
                       <tbody>
                         {transactions.map((transaction) => (
                           <tr key={transaction.id} className="border-b hover:bg-muted/50 transition-colors">
-                            <td className="py-3 px-4 text-sm text-muted-foreground font-mono">
-                              {transaction.id.slice(0, 8)}
+                            <td className="py-3 px-4 text-sm text-muted-foreground">
+                              {formatDate(transaction.date)}
                             </td>
                             <td className="py-3 px-4 text-sm font-medium">
                               {transaction.category.name}
@@ -634,6 +547,11 @@ export default function TransactionsPage() {
                                 {transaction.category.type === "income" ? "+" : "-"}
                                 {formatCurrency(transaction.amount)}
                               </span>
+                            </td>
+                            <td className="py-3 px-4 text-sm text-muted-foreground" style={{ maxWidth: '100px' }}>
+                              <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                {transaction.description || '-'}
+                              </div>
                             </td>
                             <td className="py-3 px-4 text-sm text-muted-foreground">
                               {formatDateTime(transaction.createdAt)}
@@ -687,23 +605,23 @@ export default function TransactionsPage() {
 
                       <div className="flex items-center gap-2">
                         <Button
-                          size="sm"
+                          size="icon"
                           variant="outline"
                           onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                           disabled={currentPage === 1}
                         >
-                          前へ
+                          <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm">
                           {currentPage} / {Math.ceil(totalCount / itemsPerPage)}
                         </span>
                         <Button
-                          size="sm"
+                          size="icon"
                           variant="outline"
                           onClick={() => setCurrentPage((p) => p + 1)}
                           disabled={currentPage >= Math.ceil(totalCount / itemsPerPage)}
                         >
-                          次へ
+                          <ChevronRight className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
@@ -715,10 +633,124 @@ export default function TransactionsPage() {
         )}
       </div>
 
+      {/* 検索ダイアログ */}
+      {showSearch && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowSearch(false)}>
+          <Card className="w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  検索条件
+                </CardTitle>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowSearch(false)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">科目</label>
+                  <select
+                    value={searchFilters.categoryId}
+                    onChange={(e) =>
+                      setSearchFilters({ ...searchFilters, categoryId: e.target.value })
+                    }
+                    className="w-full border rounded px-3 py-2 text-sm"
+                  >
+                    <option value="">すべて</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">金額範囲</label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      type="number"
+                      placeholder="最小"
+                      value={searchFilters.minAmount}
+                      onChange={(e) =>
+                        setSearchFilters({ ...searchFilters, minAmount: e.target.value })
+                      }
+                    />
+                    <span>〜</span>
+                    <Input
+                      type="number"
+                      placeholder="最大"
+                      value={searchFilters.maxAmount}
+                      onChange={(e) =>
+                        setSearchFilters({ ...searchFilters, maxAmount: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">開始日</label>
+                  <Input
+                    type="date"
+                    value={searchFilters.startDate}
+                    onChange={(e) =>
+                      setSearchFilters({ ...searchFilters, startDate: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">終了日</label>
+                  <Input
+                    type="date"
+                    value={searchFilters.endDate}
+                    onChange={(e) =>
+                      setSearchFilters({ ...searchFilters, endDate: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchFilters({
+                        categoryId: "",
+                        minAmount: "",
+                        maxAmount: "",
+                        startDate: "",
+                        endDate: "",
+                      });
+                    }}
+                    className="flex-1"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    クリア
+                  </Button>
+                  <Button
+                    onClick={() => setShowSearch(false)}
+                    className="flex-1"
+                  >
+                    検索
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* 編集ダイアログ */}
       {editingTransaction && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md mx-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setEditingTransaction(null)}>
+          <Card className="w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>記録の編集</CardTitle>
