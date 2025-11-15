@@ -328,92 +328,18 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
           </Card>
         )}
 
-        {/* クイック統計 */}
-        <Card className="mb-8">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>{selectedMonthLabel}の収支</CardTitle>
-              </div>
-              <div className="flex items-center gap-2">
-                {!isCurrentMonth() && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCurrentMonth}
-                    className="cursor-pointer"
-                  >
-                    <Home className="h-4 w-4 mr-1" />
-                    今月
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePreviousMonth}
-                  className="cursor-pointer"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleNextMonth}
-                  className="cursor-pointer"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* 収入 */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-green-600">
-                  <span>収入</span>
-                </div>
-                <div className="text-xl">
-                  {formatCurrency(stats.totalIncome)}
-                </div>
-                {stats.totalIncome === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    収入データを追加してください
-                  </p>
-                )}
-              </div>
-
-              {/* 支出 */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-red-600">
-                  <span>支出</span>
-                </div>
-                <div className="text-xl">
-                  {formatCurrency(stats.totalExpense)}
-                </div>
-                {stats.totalExpense === 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    支出データを追加してください
-                  </p>
-                )}
-              </div>
-
-              {/* 収支 */}
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-green-600">
-                  <span>残金</span>
-                </div>
-                <div className="text-xl">
-                  {formatCurrency(stats.balance)}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
         {/* 支出の内訳 */}
-        {expenseCategories.length > 0 && (
-          <Card>
-            <CardContent className="pt-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>{selectedYear}年{selectedMonth}月の支出内訳</CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {expenseCategories.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>この月の支出データがありません</p>
+                <p className="text-sm mt-2">家計簿入力ページから支出を記録してください</p>
+              </div>
+            ) : (
               <div className="space-y-6">
                 {/* 円グラフ */}
                 <div className="w-full h-[800px] flex items-center justify-center">
@@ -454,9 +380,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                   ))}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
