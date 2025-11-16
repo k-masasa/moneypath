@@ -37,6 +37,7 @@ type MonthlyTrend = {
   totalIncome: number;
   totalExpense: number;
   balance: number;
+  savingsRate: number;
 };
 
 type BalanceData = {
@@ -46,6 +47,15 @@ type BalanceData = {
   totalIncome?: number;
   totalExpense?: number;
   currentBalance?: number;
+};
+
+type BudgetProgressItem = {
+  id: string;
+  name: string;
+  budget: number | null;
+  spent: number;
+  percentage: number;
+  color: string;
 };
 
 export function DashboardClient({ userEmail }: DashboardClientProps) {
@@ -60,6 +70,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [balanceData, setBalanceData] = useState<BalanceData>({ hasBalance: false });
+  const [budgetProgress, setBudgetProgress] = useState<BudgetProgressItem[]>([]);
 
   // 現在の年月を初期値に
   const now = new Date();
@@ -80,6 +91,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
   useEffect(() => {
     fetchBalance();
+    fetchBudgetProgress();
   }, []);
 
   const fetchBalance = async () => {
@@ -126,6 +138,18 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     }
   };
 
+  const fetchBudgetProgress = async () => {
+    try {
+      const response = await fetch("/api/dashboard/budget-progress");
+      if (response.ok) {
+        const data = await response.json();
+        setBudgetProgress(data.categories || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch budget progress:", error);
+    }
+  };
+
   const fetchMonthlyTrends = async () => {
     startLoading();
     try {
@@ -160,6 +184,11 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
           balance = data.summary.balance || 0;
         }
 
+        // 貯蓄率を計算（収入が0の場合は0%）
+        const savingsRate = totalIncome > 0
+          ? Math.max(0, Math.min(100, ((totalIncome - totalExpense) / totalIncome) * 100))
+          : 0;
+
         // データがない月も0として追加
         trends.push({
           year,
@@ -168,6 +197,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
           totalIncome,
           totalExpense,
           balance,
+          savingsRate,
         });
       }
 
@@ -370,7 +400,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
           </CardContent>
         </Card>
 
-        {/* 12ヶ月トレンドグラフ */}
+        {/* 12ヶ月トレンドグラフ（貯蓄率含む） */}
         {monthlyTrends.length > 0 && (
           <Card className="mb-8">
             <CardContent className="pt-6">
@@ -421,16 +451,15 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                       }}
                     />
                     <YAxis
+                      yAxisId="left"
                       stroke="#666"
                       tick={{ fill: '#666', fontSize: 12 }}
                       tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
                       ticks={(() => {
-                        // データの最大値を取得
                         const maxValue = Math.max(
                           ...monthlyTrends.map(t => Math.max(t.totalIncome, t.totalExpense)),
                           0
                         );
-                        // 10万円刻みで刻み目を生成
                         const step = 100000;
                         const maxTick = Math.ceil(maxValue / step) * step;
                         const ticks = [];
@@ -440,15 +469,32 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                         return ticks;
                       })()}
                     />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      domain={[0, 100]}
+                      hide
+                    />
                     <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
+                      formatter={(value: number, name: string, props: any) => {
+                        if (name === '貯蓄額') {
+                          // 貯蓄額を計算
+                          const income = props.payload.totalIncome || 0;
+                          const expense = props.payload.totalExpense || 0;
+                          const savings = income - expense;
+                          return formatCurrency(savings);
+                        }
+                        return formatCurrency(value);
+                      }}
                       contentStyle={{
                         backgroundColor: '#fff',
                         border: '1px solid #e0e0e0',
                         borderRadius: '4px',
                       }}
                     />
+                    <Legend />
                     <Line
+                      yAxisId="left"
                       type="monotone"
                       dataKey="totalIncome"
                       stroke="#22c55e"
@@ -457,6 +503,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                       name="収入"
                     />
                     <Line
+                      yAxisId="left"
                       type="monotone"
                       dataKey="totalExpense"
                       stroke="#ef4444"
@@ -464,12 +511,86 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                       dot={{ fill: '#ef4444', r: 4 }}
                       name="支出"
                     />
+                    <Line
+                      yAxisId="right"
+                      type="monotone"
+                      dataKey="savingsRate"
+                      stroke="#6b7280"
+                      strokeWidth={2}
+                      dot={{ fill: '#6b7280', r: 4 }}
+                      name="貯蓄額"
+                    />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>
         )}
+
+        {/* 予算vs実績の進捗バー */}
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle className="text-2xl">予算進捗</CardTitle>
+            <CardDescription>
+              {selectedMonthLabel}の各カテゴリーの予算達成状況
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {budgetProgress.length > 0 ? (
+              <div className="space-y-6">
+                {budgetProgress.map((item) => (
+                  <div key={item.id} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{item.name}</span>
+                      <span
+                        className={`font-semibold ${
+                          item.budget === null
+                            ? "text-muted-foreground"
+                            : item.percentage > 100
+                            ? "text-red-600"
+                            : item.percentage >= 80
+                            ? "text-yellow-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {item.budget === null ? "予算未設定" : `${item.percentage}%`}
+                      </span>
+                    </div>
+                    {item.budget !== null && (
+                      <>
+                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${
+                              item.percentage > 100
+                                ? "bg-red-600"
+                                : item.percentage >= 80
+                                ? "bg-yellow-600"
+                                : "bg-green-600"
+                            }`}
+                            style={{ width: `${Math.min(item.percentage, 100)}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                          <span>{formatCurrency(item.spent)} 使用</span>
+                          <span>予算 {formatCurrency(item.budget)}</span>
+                        </div>
+                      </>
+                    )}
+                    {item.budget === null && (
+                      <div className="text-sm text-muted-foreground">
+                        カテゴリー管理ページで予算を設定できます
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>カテゴリーデータがありません</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* 支出の内訳 */}
         <Card>
