@@ -344,7 +344,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                 const year = today.getFullYear();
                 const month = String(today.getMonth() + 1).padStart(2, '0');
                 const day = String(today.getDate()).padStart(2, '0');
-                return `${year}/${month}/${day}の資産`;
+                return `${year}/${month}/${day} 時点の資産`;
               })()}
             </CardTitle>
           </CardHeader>
