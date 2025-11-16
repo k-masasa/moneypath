@@ -8,7 +8,7 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { useLoading } from "@/components/loading-provider";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
 
 interface DashboardClientProps {
   userEmail: string;
@@ -127,6 +127,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   };
 
   const fetchMonthlyTrends = async () => {
+    startLoading();
     try {
       const trends: MonthlyTrend[] = [];
 
@@ -150,23 +151,23 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
         if (response.ok) {
           const data = await response.json();
-          // データがある月だけ追加（transactionCountが0より大きい）
-          if (data.summary.transactionCount > 0) {
-            trends.push({
-              year,
-              month,
-              label: `${year}/${month}`,
-              totalIncome: data.summary.totalIncome,
-              totalExpense: data.summary.totalExpense,
-              balance: data.summary.balance,
-            });
-          }
+          // データがない月も0として追加
+          trends.push({
+            year,
+            month,
+            label: `${year}/${month}`,
+            totalIncome: data.summary.totalIncome || 0,
+            totalExpense: data.summary.totalExpense || 0,
+            balance: data.summary.balance || 0,
+          });
         }
       }
 
       setMonthlyTrends(trends);
     } catch (error) {
       console.error("Failed to fetch monthly trends:", error);
+    } finally {
+      stopLoading();
     }
   };
 
@@ -224,6 +225,39 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     }).format(amount);
   };
 
+  // 円グラフのカスタムラベル線
+  const renderCustomLabelLine = (entry: any) => {
+    const { cx, cy, midAngle, outerRadius } = entry.payload;
+    const RADIAN = Math.PI / 180;
+    // 線の始点：円の外周
+    const x1 = cx + outerRadius * Math.cos(-midAngle * RADIAN);
+    const y1 = cy + outerRadius * Math.sin(-midAngle * RADIAN);
+    // 線の終点：ラベル位置（円の外側から150px離れた位置）
+    const radius = outerRadius + 150;
+    const x2 = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y2 = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    return (
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#000" strokeWidth={1} />
+    );
+  };
+
+  // 円グラフのカスタムラベル（テキストを黒に固定）
+  const renderCustomLabel = (entry: any) => {
+    const { cx, cy, midAngle, outerRadius, categoryName, totalAmount } = entry;
+    const RADIAN = Math.PI / 180;
+    // ラベルを円の外側からさらに150px離す
+    const radius = outerRadius + 150;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const percentage = ((totalAmount / stats.totalExpense) * 100).toFixed(0);
+    return (
+      <text x={x} y={y} fill="#000" fontSize={14} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+        {`${categoryName} (${percentage}%)`}
+      </text>
+    );
+  };
+
   const selectedMonthLabel = `${selectedYear}年${selectedMonth}月`;
 
   // 収入と支出のカテゴリーを分離
@@ -263,7 +297,13 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const chartExpenseCategories = prepareChartData(expenseCategories, stats.totalExpense);
 
   // 円グラフ用のカラーパレット（グレースケール）
-  const COLORS = ['#2d2d2d', '#4a4a4a', '#6b6b6b', '#8c8c8c', '#adadad', '#cecece', '#efefef'];
+  const COLORS = ['#2d2d2d', '#4a4a4a', '#6b6b6b', '#8c8c8c', '#adadad'];
+  const OTHER_COLOR = '#cecece'; // 6つ目以降の色（薄いグレー）
+
+  // 色を取得する関数（上位5つまで異なる色、6つ目以降は同じ色）
+  const getColor = (index: number) => {
+    return index < 5 ? COLORS[index] : OTHER_COLOR;
+  };
 
   if (isInitialLoad) {
     return (
@@ -287,32 +327,19 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
       <div className="pt-24 pl-64 container mx-auto px-4 py-8">
         {/* 現在の資産 */}
-        <Card className="mb-8 border-primary/50 bg-primary/5">
+        <Card className="mb-8">
           <CardHeader>
             <CardTitle className="text-2xl">現在の資産</CardTitle>
           </CardHeader>
           <CardContent>
             {balanceData.hasBalance ? (
-              <div className="space-y-4">
-                <div className="text-5xl font-bold text-primary">
-                  {formatCurrency(balanceData.currentBalance || 0)}
+              <div className="space-y-3">
+                <div className={`text-5xl font-bold ${(balanceData.currentBalance || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {(balanceData.currentBalance || 0) < 0 && '-'}
+                  {formatCurrency(Math.abs(balanceData.currentBalance || 0))}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground">初期残高</div>
-                    <div className="font-semibold">{formatCurrency(balanceData.initialBalance || 0)}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground">収入</div>
-                    <div className="font-semibold text-green-600">+{formatCurrency(balanceData.totalIncome || 0)}</div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-muted-foreground">支出</div>
-                    <div className="font-semibold text-red-600">-{formatCurrency(balanceData.totalExpense || 0)}</div>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {balanceData.balanceStartDate && `${new Date(balanceData.balanceStartDate).toLocaleDateString('ja-JP')} から計算`}
+                <div className="text-sm text-muted-foreground">
+                  {balanceData.balanceStartDate && `${new Date(balanceData.balanceStartDate).toLocaleDateString('ja-JP')} に記録開始`}
                 </div>
               </div>
             ) : (
@@ -350,7 +377,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
               </div>
               <div className="w-full h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthlyTrends}>
+                  <LineChart data={monthlyTrends}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                     <XAxis
                       dataKey="label"
@@ -385,9 +412,23 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                         borderRadius: '4px',
                       }}
                     />
-                    <Bar dataKey="totalIncome" fill="#22c55e" name="収入" />
-                    <Bar dataKey="totalExpense" fill="#ef4444" name="支出" />
-                  </BarChart>
+                    <Line
+                      type="monotone"
+                      dataKey="totalIncome"
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      dot={{ fill: '#22c55e', r: 4 }}
+                      name="収入"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="totalExpense"
+                      stroke="#ef4444"
+                      strokeWidth={2}
+                      dot={{ fill: '#ef4444', r: 4 }}
+                      name="支出"
+                    />
+                  </LineChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>
@@ -406,45 +447,28 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                 <p className="text-sm mt-2">家計簿入力ページから支出を記録してください</p>
               </div>
             ) : (
-              <div className="space-y-6">
-                {/* 円グラフ */}
-                <div className="w-full h-[800px] flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={chartExpenseCategories}
-                        dataKey="totalAmount"
-                        nameKey="categoryName"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={280}
-                        label={(entry: any) => `${entry.categoryName} (${((entry.totalAmount / stats.totalExpense) * 100).toFixed(0)}%)`}
-                      >
-                        {chartExpenseCategories.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* カテゴリーリスト */}
-                <div className="space-y-2">
-                  {expenseCategories.map((category, index) => (
-                    <div key={category.categoryId} className="flex items-center justify-between py-2 border-b last:border-0">
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                        />
-                        <span className="text-sm font-medium">{category.categoryName}</span>
-                        <span className="text-xs text-muted-foreground">({category.count}件)</span>
-                      </div>
-                      <span className="text-sm font-semibold">{formatCurrency(category.totalAmount)}</span>
-                    </div>
-                  ))}
-                </div>
+              <div className="w-full h-[800px] flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartExpenseCategories}
+                      dataKey="totalAmount"
+                      nameKey="categoryName"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={280}
+                      startAngle={90}
+                      endAngle={-270}
+                      label={renderCustomLabel}
+                      labelLine={renderCustomLabelLine}
+                    >
+                      {chartExpenseCategories.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={getColor(index)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
               </div>
             )}
           </CardContent>
