@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FileText, Tag, Target, Home } from "lucide-react";
+import { FileText, Tag, Target, Home, Settings } from "lucide-react";
 
 const menuItems = [
   {
@@ -26,6 +26,11 @@ const menuItems = [
     icon: Target,
     disabled: true,
   },
+  {
+    href: "/settings",
+    label: "設定",
+    icon: Settings,
+  },
 ];
 
 export function DashboardSidebar() {
@@ -46,13 +51,13 @@ export function DashboardSidebar() {
                 item.disabled
                   ? "opacity-50 cursor-not-allowed"
                   : isActive
-                  ? "bg-primary text-primary-foreground"
+                  ? ""
                   : "hover:bg-gray-100"
               }`}
               onClick={(e) => item.disabled && e.preventDefault()}
             >
               <Icon className="h-5 w-5" />
-              <span className="font-medium">{item.label}</span>
+              <span className={`font-medium ${isActive ? "underline" : ""}`}>{item.label}</span>
             </Link>
           );
         })}

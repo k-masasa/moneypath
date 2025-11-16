@@ -149,18 +149,26 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
           `/api/analytics?startDate=${startDateStr}&endDate=${endDateStr}`
         );
 
+        let totalIncome = 0;
+        let totalExpense = 0;
+        let balance = 0;
+
         if (response.ok) {
           const data = await response.json();
-          // データがない月も0として追加
-          trends.push({
-            year,
-            month,
-            label: `${year}/${month}`,
-            totalIncome: data.summary.totalIncome || 0,
-            totalExpense: data.summary.totalExpense || 0,
-            balance: data.summary.balance || 0,
-          });
+          totalIncome = data.summary.totalIncome || 0;
+          totalExpense = data.summary.totalExpense || 0;
+          balance = data.summary.balance || 0;
         }
+
+        // データがない月も0として追加
+        trends.push({
+          year,
+          month,
+          label: `${year}/${month}`,
+          totalIncome,
+          totalExpense,
+          balance,
+        });
       }
 
       setMonthlyTrends(trends);
@@ -330,7 +338,15 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         {/* 現在の資産 */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="text-2xl">現在の資産</CardTitle>
+            <CardTitle className="text-2xl">
+              {(() => {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                return `${year}/${month}/${day}の資産`;
+              })()}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {balanceData.hasBalance ? (
@@ -358,7 +374,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         {monthlyTrends.length > 0 && (
           <Card className="mb-8">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-end gap-2 mb-4">
                 <Button
                   variant="outline"
                   size="icon"
@@ -378,12 +394,31 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
               </div>
               <div className="w-full h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyTrends}>
+                  <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                     <XAxis
                       dataKey="label"
                       stroke="#666"
-                      tick={{ fill: '#666', fontSize: 12 }}
+                      tick={(props) => {
+                        const { x, y, payload } = props;
+                        const currentMonth = `${now.getFullYear()}/${now.getMonth() + 1}`;
+                        const isCurrentMonth = payload.value === currentMonth;
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text
+                              x={0}
+                              y={0}
+                              dy={16}
+                              textAnchor="middle"
+                              fill="#666"
+                              fontSize={12}
+                              fontWeight={isCurrentMonth ? 'bold' : 'normal'}
+                            >
+                              {payload.value}
+                            </text>
+                          </g>
+                        );
+                      }}
                     />
                     <YAxis
                       stroke="#666"
@@ -439,7 +474,36 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         {/* 支出の内訳 */}
         <Card>
           <CardHeader>
-            <CardTitle>{selectedYear}年{selectedMonth}月の支出内訳</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>{selectedYear}年{selectedMonth}月の支出内訳</CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePreviousMonth}
+                  className="cursor-pointer"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNextMonth}
+                  className="cursor-pointer"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCurrentMonth}
+                  className="cursor-pointer"
+                  title="今月に戻る"
+                >
+                  <Home className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="pt-6">
             {expenseCategories.length === 0 ? (

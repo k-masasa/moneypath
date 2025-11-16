@@ -38,7 +38,7 @@ export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background">
+    <header className="fixed top-0 left-0 right-0 z-50 border-b" style={{ backgroundColor: '#f6f8fa' }}>
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link href="/dashboard" className="text-2xl font-bold">
