@@ -227,13 +227,13 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
   // 円グラフのカスタムラベル線
   const renderCustomLabelLine = (entry: any) => {
-    const { cx, cy, midAngle, outerRadius } = entry.payload;
+    const { cx, cy, midAngle, outerRadius } = entry;
     const RADIAN = Math.PI / 180;
     // 線の始点：円の外周
     const x1 = cx + outerRadius * Math.cos(-midAngle * RADIAN);
     const y1 = cy + outerRadius * Math.sin(-midAngle * RADIAN);
     // 線の終点：ラベル位置（円の外側から150px離れた位置）
-    const radius = outerRadius + 150;
+    const radius = outerRadius + 50;
     const x2 = cx + radius * Math.cos(-midAngle * RADIAN);
     const y2 = cy + radius * Math.sin(-midAngle * RADIAN);
 
@@ -244,10 +244,11 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
   // 円グラフのカスタムラベル（テキストを黒に固定）
   const renderCustomLabel = (entry: any) => {
-    const { cx, cy, midAngle, outerRadius, categoryName, totalAmount } = entry;
+    const { cx, cy, midAngle, outerRadius } = entry;
+    const { categoryName, totalAmount } = entry.payload;
     const RADIAN = Math.PI / 180;
     // ラベルを円の外側からさらに150px離す
-    const radius = outerRadius + 150;
+    const radius = outerRadius + 50;
     const x = cx + radius * Math.cos(-midAngle * RADIAN);
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     const percentage = ((totalAmount / stats.totalExpense) * 100).toFixed(0);
@@ -456,7 +457,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                       nameKey="categoryName"
                       cx="50%"
                       cy="50%"
-                      outerRadius={280}
                       startAngle={90}
                       endAngle={-270}
                       label={renderCustomLabel}
