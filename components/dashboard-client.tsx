@@ -71,6 +71,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [balanceData, setBalanceData] = useState<BalanceData>({ hasBalance: false });
   const [budgetProgress, setBudgetProgress] = useState<BudgetProgressItem[]>([]);
+  const [isTrendLoading, setIsTrendLoading] = useState(false);
 
   // 現在の年月を初期値に
   const now = new Date();
@@ -151,7 +152,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   };
 
   const fetchMonthlyTrends = async () => {
-    startLoading();
+    setIsTrendLoading(true);
     try {
       const trends: MonthlyTrend[] = [];
 
@@ -205,7 +206,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     } catch (error) {
       console.error("Failed to fetch monthly trends:", error);
     } finally {
-      stopLoading();
+      setIsTrendLoading(false);
     }
   };
 
@@ -403,8 +404,10 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         {/* 12ヶ月トレンドグラフ（貯蓄率含む） */}
         {monthlyTrends.length > 0 && (
           <Card className="mb-8">
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-end gap-2 mb-4">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl">収支推移</CardTitle>
+                <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="icon"
@@ -421,10 +424,21 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                 >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
+                </div>
               </div>
-              <div className="w-full h-[400px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            </CardHeader>
+            <CardContent>
+              {isTrendLoading ? (
+                <div className="w-full h-[400px] flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <Wallet className="h-12 w-12 animate-pulse text-primary" />
+                    <p className="text-sm text-muted-foreground">データを読み込んでいます...</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-[400px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                     <XAxis
                       dataKey="label"
@@ -522,10 +536,78 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                     />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}
+
+        {/* 支出の内訳 */}
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>支出内訳 ({selectedYear}/{selectedMonth})</CardTitle>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePreviousMonth}
+                  className="cursor-pointer"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleNextMonth}
+                  className="cursor-pointer"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCurrentMonth}
+                  className="cursor-pointer"
+                  title="今月に戻る"
+                >
+                  <Home className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {expenseCategories.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <p>この月の支出データがありません</p>
+                <p className="text-sm mt-2">家計簿入力ページから支出を記録してください</p>
+              </div>
+            ) : (
+              <div className="w-full h-[800px] flex items-center justify-center">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartExpenseCategories}
+                      dataKey="totalAmount"
+                      nameKey="categoryName"
+                      cx="50%"
+                      cy="50%"
+                      startAngle={90}
+                      endAngle={-270}
+                      label={renderCustomLabel}
+                      labelLine={renderCustomLabelLine}
+                    >
+                      {chartExpenseCategories.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={getColor(index)} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* 予算vs実績の進捗バー */}
         <Card className="mb-8">
@@ -587,73 +669,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <p>カテゴリーデータがありません</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 支出の内訳 */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>支出内訳 ({selectedYear}/{selectedMonth})</CardTitle>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePreviousMonth}
-                  className="cursor-pointer"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleNextMonth}
-                  className="cursor-pointer"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleCurrentMonth}
-                  className="cursor-pointer"
-                  title="今月に戻る"
-                >
-                  <Home className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {expenseCategories.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <p>この月の支出データがありません</p>
-                <p className="text-sm mt-2">家計簿入力ページから支出を記録してください</p>
-              </div>
-            ) : (
-              <div className="w-full h-[800px] flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartExpenseCategories}
-                      dataKey="totalAmount"
-                      nameKey="categoryName"
-                      cx="50%"
-                      cy="50%"
-                      startAngle={90}
-                      endAngle={-270}
-                      label={renderCustomLabel}
-                      labelLine={renderCustomLabelLine}
-                    >
-                      {chartExpenseCategories.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={getColor(index)} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  </PieChart>
-                </ResponsiveContainer>
               </div>
             )}
           </CardContent>
