@@ -19,109 +19,129 @@ model User {
   email            String    @unique
   password         String
   name             String?
-  initialBalance   Decimal?  @db.Decimal(10, 2) // 初期残高
-  balanceStartDate DateTime? // 残高計算の開始日
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  initialBalance   Decimal?  @db.Decimal(10, 2) @map("initial_balance") // 初期残高
+  balanceStartDate DateTime? @map("balance_start_date") // 残高計算の開始日
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
+  // Relations
   incomes      Income[]
   expenses     Expense[]
   debts        Debt[]
   goals        Goal[]
   categories   Category[]
   transactions Transaction[]
+
+  @@map("users")
 }
 
 // 収入
 model Income {
   id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
   amount    Decimal  @db.Decimal(10, 2)
   source    String
   recurring Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("incomes")
 }
 
 // 支出
 model Expense {
   id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
   amount    Decimal  @db.Decimal(10, 2)
   category  String
   recurring Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("expenses")
 }
 
 // 負債
 model Debt {
-  id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name        String
-  totalAmount Decimal  @db.Decimal(10, 2)
-  remaining   Decimal  @db.Decimal(10, 2)
-  interestRate Decimal @db.Decimal(5, 2)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  name         String
+  totalAmount  Decimal  @db.Decimal(10, 2) @map("total_amount")
+  remaining    Decimal  @db.Decimal(10, 2)
+  interestRate Decimal  @db.Decimal(5, 2) @map("interest_rate")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("debts")
 }
 
 // 目標
 model Goal {
   id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String   @map("user_id")
   type         String   // "debt_payoff" or "savings"
-  targetAmount Decimal  @db.Decimal(10, 2)
-  targetDate   DateTime
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  targetAmount Decimal  @db.Decimal(10, 2) @map("target_amount")
+  targetDate   DateTime @map("target_date")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@map("goals")
 }
 
 // カテゴリー（科目）
 model Category {
   id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @map("user_id")
   name      String
   type      String   // "income" or "expense"
   color     String?  // カラーコード（UI用）
   icon      String?  // アイコン（絵文字など）
   order     Int      @default(0) // 表示順序
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
   @@index([userId])
   @@index([userId, type])
+  @@map("categories")
 }
 
 // トランザクション（家計簿エントリー）
 model Transaction {
   id          String   @id @default(uuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  userId      String   @map("user_id")
+  categoryId  String   @map("category_id")
   amount      Decimal  @db.Decimal(10, 2)
   description String?
   date        DateTime @default(now())
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([userId, date])
   @@index([categoryId])
+  @@map("transactions")
 }
