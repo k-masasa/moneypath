@@ -475,7 +475,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>{selectedYear}年{selectedMonth}月の支出内訳</CardTitle>
+              <CardTitle>支出内訳 ({selectedYear}/{selectedMonth})</CardTitle>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
