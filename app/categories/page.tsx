@@ -10,6 +10,7 @@ import { useLoading } from "@/components/loading-provider";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
+import { Edit, Trash2 } from "lucide-react";
 
 type Category = {
   id: string;
@@ -46,7 +47,6 @@ export default function CategoriesPage() {
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoading();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -117,7 +117,6 @@ export default function CategoriesPage() {
       }
 
       await fetchCategories();
-      setShowForm(false);
       setEditingCategory(null);
       setFormData({ name: "", type: "expense", order: 0 });
     } catch (error) {
@@ -166,33 +165,21 @@ export default function CategoriesPage() {
       <DashboardHeader userEmail={session?.user?.email || ""} />
       <DashboardSidebar />
 
-      <div className="pt-24 pl-64 container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">カテゴリー管理</h1>
-        {/* アクションボタン */}
-        <div className="mb-6 flex gap-4">
-          <Button
-            onClick={() => {
-              setShowForm(true);
-              setEditingCategory(null);
-              setFormData({ name: "", type: "expense", order: 0 });
-            }}
-          >
-            + 新規カテゴリー
-          </Button>
-
-          {categories.length === 0 && (
+      <div className="pt-32 pl-64 container mx-auto px-4 py-8">
+        {/* デフォルトカテゴリー作成ボタン */}
+        {categories.length === 0 && (
+          <div className="mb-6">
             <Button
               onClick={initializeDefaultCategories}
               variant="secondary"
             >
               デフォルトカテゴリーを作成
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* フォーム */}
-        {showForm && (
-          <Card className="mb-6">
+        <Card className="mb-6">
             <CardHeader>
               <CardTitle>
                 {editingCategory ? "カテゴリー編集" : "新規カテゴリー"}
@@ -252,21 +239,22 @@ export default function CategoriesPage() {
                   <Button type="submit">
                     {editingCategory ? "更新" : "作成"}
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowForm(false);
-                      setEditingCategory(null);
-                    }}
-                  >
-                    キャンセル
-                  </Button>
+                  {editingCategory && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setEditingCategory(null);
+                        setFormData({ name: "", type: "expense", order: 0 });
+                      }}
+                    >
+                      キャンセル
+                    </Button>
+                  )}
                 </div>
               </form>
             </CardContent>
           </Card>
-        )}
 
         {/* カテゴリーリスト */}
         <div>
@@ -290,7 +278,7 @@ export default function CategoriesPage() {
                           onClick={() => handleEdit(category)}
                           className="cursor-pointer"
                         >
-                          編集
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
@@ -298,7 +286,7 @@ export default function CategoriesPage() {
                           onClick={() => handleDelete(category.id)}
                           className="text-destructive hover:text-destructive cursor-pointer"
                         >
-                          削除
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </CardContent>
@@ -331,7 +319,7 @@ export default function CategoriesPage() {
                           onClick={() => handleEdit(category)}
                           className="cursor-pointer"
                         >
-                          編集
+                          <Edit className="h-4 w-4" />
                         </Button>
                         <Button
                           size="sm"
@@ -339,7 +327,7 @@ export default function CategoriesPage() {
                           onClick={() => handleDelete(category.id)}
                           className="text-destructive hover:text-destructive cursor-pointer"
                         >
-                          削除
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </CardContent>

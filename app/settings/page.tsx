@@ -90,9 +90,7 @@ export default function SettingsPage() {
       <DashboardHeader userEmail={session?.user?.email || ""} />
       <DashboardSidebar />
 
-      <div className="pt-24 pl-64 container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6">設定</h1>
-
+      <div className="pt-32 pl-64 container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
             <CardTitle>初期残高設定</CardTitle>

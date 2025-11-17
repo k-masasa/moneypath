@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoading } from "@/components/loading-provider";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, HelpCircle, Search, X, Edit, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, HelpCircle, Search, X, Edit, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
-import confetti from "canvas-confetti";
+import { ScheduledPaymentsList } from "@/components/scheduled-payments-list";
+import { CompletePaymentDialog } from "@/components/complete-payment-dialog";
+import { AddScheduledPaymentDialog } from "@/components/add-scheduled-payment-dialog";
 
 type Category = {
   id: string;
@@ -29,17 +31,28 @@ type Transaction = {
   createdAt: string;
 };
 
+type ScheduledPayment = {
+  id: string;
+  name: string;
+  estimatedAmount: number;
+  dueDate: string;
+  status: string;
+  category: Category;
+};
+
 export default function TransactionsPage() {
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoading();
   const { toast } = useToast();
-  const amountInputRef = useRef<HTMLInputElement>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [scheduledPayments, setScheduledPayments] = useState<ScheduledPayment[]>([]);
+  const [selectedPayment, setSelectedPayment] = useState<ScheduledPayment | null>(null);
+  const [showAddPaymentDialog, setShowAddPaymentDialog] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [showForm, setShowForm] = useState(true); // デフォルトで表示
+  const [showTransactionsList, setShowTransactionsList] = useState(false); // 最近の記録の開閉状態（デフォルト閉じる）
   const [showSearch, setShowSearch] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     categoryId: "",
@@ -56,37 +69,12 @@ export default function TransactionsPage() {
     date: "",
   });
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [formData, setFormData] = useState({
-    categoryId: "",
-    amount: "",
-    description: "",
-    date: (() => {
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      return `${year}-${month}-${day}`;
-    })(),
-  });
 
   useEffect(() => {
     fetchData();
+    fetchScheduledPayments();
+    setIsInitialLoading(false);
   }, []);
-
-  useEffect(() => {
-    // カテゴリー取得後、支出の最初のカテゴリーを選択
-    if (categories.length > 0 && !formData.categoryId) {
-      const expenseCategories = categories.filter((c) => c.type === "expense");
-      if (expenseCategories.length > 0) {
-        setFormData({ ...formData, categoryId: expenseCategories[0].id });
-        // カテゴリー設定後、金額欄にフォーカス
-        setTimeout(() => {
-          amountInputRef.current?.focus();
-        }, 100);
-      }
-      setIsInitialLoading(false);
-    }
-  }, [categories]);
 
   useEffect(() => {
     fetchData();
@@ -96,13 +84,6 @@ export default function TransactionsPage() {
     setCurrentPage(1);
     fetchData();
   }, [searchFilters]);
-
-  useEffect(() => {
-    // フォーム表示時に金額欄にフォーカス
-    if (showForm && amountInputRef.current) {
-      amountInputRef.current.focus();
-    }
-  }, [showForm]);
 
   const fetchData = async () => {
     startLoading();
@@ -137,68 +118,13 @@ export default function TransactionsPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.categoryId || !formData.amount) {
-      toast({
-        title: "入力エラー",
-        description: "カテゴリーと金額を入力してください",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    startLoading();
+  const fetchScheduledPayments = async () => {
     try {
-      const response = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          amount: parseFloat(formData.amount),
-          date: new Date(formData.date).toISOString(),
-        }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create transaction");
-
-      setCurrentPage(1);
-      await fetchData();
-
-      // カテゴリーはそのまま、金額とメモだけクリア
-      setFormData({
-        ...formData,
-        amount: "",
-        description: "",
-      });
-
-      toast({
-        title: "✅ 記録しました",
-        description: `¥${parseFloat(formData.amount).toLocaleString()} を記録しました`,
-      });
-
-      // 紙吹雪アニメーション
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#22c55e', '#10b981', '#059669'],
-      });
-
-      // 金額欄に再フォーカス
-      setTimeout(() => {
-        amountInputRef.current?.focus();
-      }, 100);
+      const response = await fetch("/api/scheduled-payments");
+      const data = await response.json();
+      setScheduledPayments(data.scheduledPayments || []);
     } catch (error) {
-      console.error("Submit error:", error);
-      toast({
-        title: "エラー",
-        description: "記録に失敗しました",
-        variant: "destructive",
-      });
-    } finally {
-      stopLoading();
+      console.error("Failed to fetch scheduled payments:", error);
     }
   };
 
@@ -284,6 +210,116 @@ export default function TransactionsPage() {
     }
   };
 
+  const handlePaymentComplete = async (actualAmount: number) => {
+    if (!selectedPayment) return;
+
+    startLoading();
+    try {
+      const response = await fetch(
+        `/api/scheduled-payments/${selectedPayment.id}/complete`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ actualAmount }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to complete payment");
+
+      await Promise.all([fetchData(), fetchScheduledPayments()]);
+      setSelectedPayment(null);
+
+      toast({
+        title: "✅ 支払いを記録しました",
+        description: `¥${actualAmount.toLocaleString()} を記録しました`,
+      });
+
+      // 紙吹雪アニメーション
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#22c55e", "#10b981", "#059669"],
+      });
+    } catch (error) {
+      console.error("Payment completion error:", error);
+      toast({
+        title: "エラー",
+        description: "支払いの記録に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      stopLoading();
+    }
+  };
+
+  const handleScheduledPaymentDelete = async (id: string) => {
+    startLoading();
+    try {
+      const response = await fetch(`/api/scheduled-payments/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) throw new Error("Failed to delete scheduled payment");
+
+      await fetchScheduledPayments();
+      toast({
+        title: "削除しました",
+        description: "支払い予定を削除しました",
+      });
+    } catch (error) {
+      console.error("Delete scheduled payment error:", error);
+      toast({
+        title: "エラー",
+        description: "削除に失敗しました",
+        variant: "destructive",
+      });
+    } finally {
+      stopLoading();
+    }
+  };
+
+  const handleAddScheduledPayment = async (data: {
+    name: string;
+    categoryId: string;
+    estimatedAmount: number;
+    dueDate: string;
+  }) => {
+    startLoading();
+    try {
+      const response = await fetch("/api/scheduled-payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...data,
+          dueDate: new Date(data.dueDate).toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("API Error:", errorData);
+        throw new Error(errorData.error || "Failed to add scheduled payment");
+      }
+
+      await fetchScheduledPayments();
+      toast({
+        title: "✅ 登録しました",
+        description: `${data.name} を支払い予定に追加しました`,
+      });
+    } catch (error) {
+      console.error("Add scheduled payment error:", error);
+      toast({
+        title: "エラー",
+        description: error instanceof Error ? error.message : "登録に失敗しました",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      stopLoading();
+    }
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ja-JP", {
       style: "currency",
@@ -311,34 +347,12 @@ export default function TransactionsPage() {
     }).format(date);
   };
 
-  // カテゴリー別にグループ化
-  const expenseCategories = categories.filter((c) => c.type === "expense");
-  const incomeCategories = categories.filter((c) => c.type === "income");
-
   return (
     <div className="min-h-screen bg-background">
       <DashboardHeader userEmail={session?.user?.email || ""} />
       <DashboardSidebar />
 
-      <div className="pt-24 pl-64 container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold">家計簿入力</h1>
-          <div className="group relative">
-            <HelpCircle className="h-6 w-6 text-muted-foreground cursor-help" />
-            <div className="invisible group-hover:visible absolute right-0 top-8 z-50 w-64 rounded-md bg-popover p-3 text-sm text-popover-foreground shadow-md border">
-              <p className="font-semibold mb-2">使い方</p>
-              <ol className="list-decimal list-inside space-y-1">
-                <li>カテゴリーを選択</li>
-                <li>金額を入力</li>
-                <li>必要に応じて日付とメモを入力</li>
-                <li>「記録する」ボタンをクリック</li>
-              </ol>
-              <p className="mt-2 text-xs text-muted-foreground">
-                同じカテゴリーで連続入力できます
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="pt-32 pl-64 container mx-auto px-4 py-8">
         {isInitialLoading ? (
           <Card className="mb-8">
             <CardContent className="py-8">
@@ -363,151 +377,24 @@ export default function TransactionsPage() {
           </Card>
         ) : (
           <>
-            {/* 入力フォーム */}
-            {showForm && (
-              <Card className="mb-8">
-                <CardContent className="pt-6">
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* カテゴリーチップ */}
-                    <div className="space-y-3">
-                      <div className="text-sm font-medium">カテゴリー</div>
-
-                      {incomeCategories.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="text-xs text-muted-foreground font-medium">収入</div>
-                          <div className="flex flex-wrap gap-2">
-                            {incomeCategories.map((cat) => (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                onClick={() => {
-                                  setFormData({ ...formData, categoryId: cat.id });
-                                  setTimeout(() => amountInputRef.current?.focus(), 0);
-                                }}
-                                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors cursor-pointer border h-9 px-3 ${
-                                  formData.categoryId === cat.id
-                                    ? ""
-                                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                }`}
-                                style={
-                                  formData.categoryId === cat.id
-                                    ? {
-                                        backgroundColor: "hsl(0 0% 30%)",
-                                        borderColor: "hsl(0 0% 30%)",
-                                        color: "hsl(0 0% 100%)",
-                                      }
-                                    : undefined
-                                }
-                              >
-                                {cat.name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {expenseCategories.length > 0 && (
-                        <div className="space-y-2">
-                          <div className="text-xs text-muted-foreground font-medium">支出</div>
-                          <div className="flex flex-wrap gap-2">
-                            {expenseCategories.map((cat) => (
-                              <button
-                                key={cat.id}
-                                type="button"
-                                onClick={() => {
-                                  setFormData({ ...formData, categoryId: cat.id });
-                                  setTimeout(() => amountInputRef.current?.focus(), 0);
-                                }}
-                                className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors cursor-pointer border h-9 px-3 ${
-                                  formData.categoryId === cat.id
-                                    ? ""
-                                    : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
-                                }`}
-                                style={
-                                  formData.categoryId === cat.id
-                                    ? {
-                                        backgroundColor: "hsl(0 0% 30%)",
-                                        borderColor: "hsl(0 0% 30%)",
-                                        color: "hsl(0 0% 100%)",
-                                      }
-                                    : undefined
-                                }
-                              >
-                                {cat.name}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label htmlFor="amount" className="text-sm font-medium">金額</label>
-                        <Input
-                          ref={amountInputRef}
-                          id="amount"
-                          type="number"
-                          required
-                          min="0"
-                          step="1"
-                          value={formData.amount}
-                          onChange={(e) =>
-                            setFormData({ ...formData, amount: e.target.value })
-                          }
-                          placeholder="1000"
-                          className="text-lg"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label htmlFor="date" className="text-sm font-medium">日付</label>
-                        <Input
-                          id="date"
-                          type="date"
-                          required
-                          value={formData.date}
-                          onChange={(e) =>
-                            setFormData({ ...formData, date: e.target.value })
-                          }
-                        />
-                      </div>
-
-                      <div className="md:col-span-2 space-y-2">
-                        <label htmlFor="description" className="text-sm font-medium">メモ（任意）</label>
-                        <Input
-                          id="description"
-                          type="text"
-                          value={formData.description}
-                          onChange={(e) =>
-                            setFormData({ ...formData, description: e.target.value })
-                          }
-                          placeholder="詳細メモ"
-                        />
-                      </div>
-                    </div>
-
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full"
-                      style={{
-                        backgroundColor: "hsl(0 0% 30%)",
-                        color: "hsl(0 0% 100%)",
-                      }}
-                    >
-                      記録する
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            )}
-
             {/* 記録リスト */}
-            <Card>
+            <Card className="mb-8">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>最近の記録</CardTitle>
+                  <div
+                    className="flex items-center gap-2 cursor-pointer flex-1"
+                    onClick={() => setShowTransactionsList(!showTransactionsList)}
+                  >
+                    <CardTitle>収支履歴</CardTitle>
+                    <span className="text-sm text-muted-foreground">
+                      ({totalCount}件)
+                    </span>
+                    {showTransactionsList ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
                   <Button
                     size="sm"
                     variant="outline"
@@ -517,7 +404,8 @@ export default function TransactionsPage() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
+              {showTransactionsList && (
+                <CardContent>
                 {transactions.length === 0 ? (
                   <p className="text-muted-foreground">まだ記録がありません</p>
                 ) : (
@@ -633,8 +521,17 @@ export default function TransactionsPage() {
                     </div>
                   </div>
                 )}
-              </CardContent>
+                </CardContent>
+              )}
             </Card>
+
+            {/* 支払い予定リスト */}
+            <ScheduledPaymentsList
+              scheduledPayments={scheduledPayments}
+              onPaymentClick={setSelectedPayment}
+              onDelete={handleScheduledPaymentDelete}
+              onAddClick={() => setShowAddPaymentDialog(true)}
+            />
           </>
         )}
       </div>
@@ -845,6 +742,24 @@ export default function TransactionsPage() {
           </Card>
         </div>
       )}
+
+      {/* 支払い完了ダイアログ */}
+      {selectedPayment && (
+        <CompletePaymentDialog
+          open={!!selectedPayment}
+          onClose={() => setSelectedPayment(null)}
+          scheduledPayment={selectedPayment}
+          onComplete={handlePaymentComplete}
+        />
+      )}
+
+      {/* 支払い予定追加ダイアログ */}
+      <AddScheduledPaymentDialog
+        open={showAddPaymentDialog}
+        onClose={() => setShowAddPaymentDialog(false)}
+        categories={categories}
+        onAdd={handleAddScheduledPayment}
+      />
     </div>
   );
 }

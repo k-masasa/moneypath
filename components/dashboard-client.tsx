@@ -49,15 +49,6 @@ type BalanceData = {
   currentBalance?: number;
 };
 
-type BudgetProgressItem = {
-  id: string;
-  name: string;
-  budget: number | null;
-  spent: number;
-  percentage: number;
-  color: string;
-};
-
 export function DashboardClient({ userEmail }: DashboardClientProps) {
   const { startLoading, stopLoading } = useLoading();
   const [stats, setStats] = useState<MonthlyStats>({
@@ -70,7 +61,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [balanceData, setBalanceData] = useState<BalanceData>({ hasBalance: false });
-  const [budgetProgress, setBudgetProgress] = useState<BudgetProgressItem[]>([]);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
 
   // 現在の年月を初期値に
@@ -92,7 +82,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
 
   useEffect(() => {
     fetchBalance();
-    fetchBudgetProgress();
   }, []);
 
   const fetchBalance = async () => {
@@ -136,18 +125,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       } else {
         stopLoading();
       }
-    }
-  };
-
-  const fetchBudgetProgress = async () => {
-    try {
-      const response = await fetch("/api/dashboard/budget-progress");
-      if (response.ok) {
-        const data = await response.json();
-        setBudgetProgress(data.categories || []);
-      }
-    } catch (error) {
-      console.error("Failed to fetch budget progress:", error);
     }
   };
 
@@ -350,7 +327,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       <div className="min-h-screen bg-background">
         <DashboardHeader userEmail={userEmail} />
         <DashboardSidebar />
-        <div className="pt-24 pl-64 container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
+        <div className="pt-32 pl-64 container mx-auto px-4 py-8 flex items-center justify-center min-h-[50vh]">
           <div className="flex flex-col items-center gap-4">
             <Wallet className="h-12 w-12 animate-pulse text-primary" />
             <p className="text-sm text-muted-foreground">データを読み込んでいます...</p>
@@ -365,7 +342,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       <DashboardHeader userEmail={userEmail} />
       <DashboardSidebar />
 
-      <div className="pt-24 pl-64 container mx-auto px-4 py-8">
+      <div className="pt-32 pl-64 container mx-auto px-4 py-8">
         {/* 現在の資産 */}
         <Card className="mb-8">
           <CardHeader>
@@ -604,71 +581,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                     <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* 予算vs実績の進捗バー */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl">予算進捗</CardTitle>
-            <CardDescription>
-              {selectedMonthLabel}の各カテゴリーの予算達成状況
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {budgetProgress.length > 0 ? (
-              <div className="space-y-6">
-                {budgetProgress.map((item) => (
-                  <div key={item.id} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">{item.name}</span>
-                      <span
-                        className={`font-semibold ${
-                          item.budget === null
-                            ? "text-muted-foreground"
-                            : item.percentage > 100
-                            ? "text-red-600"
-                            : item.percentage >= 80
-                            ? "text-yellow-600"
-                            : "text-green-600"
-                        }`}
-                      >
-                        {item.budget === null ? "予算未設定" : `${item.percentage}%`}
-                      </span>
-                    </div>
-                    {item.budget !== null && (
-                      <>
-                        <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              item.percentage > 100
-                                ? "bg-red-600"
-                                : item.percentage >= 80
-                                ? "bg-yellow-600"
-                                : "bg-green-600"
-                            }`}
-                            style={{ width: `${Math.min(item.percentage, 100)}%` }}
-                          />
-                        </div>
-                        <div className="flex justify-between text-sm text-muted-foreground">
-                          <span>{formatCurrency(item.spent)} 使用</span>
-                          <span>予算 {formatCurrency(item.budget)}</span>
-                        </div>
-                      </>
-                    )}
-                    {item.budget === null && (
-                      <div className="text-sm text-muted-foreground">
-                        カテゴリー管理ページで予算を設定できます
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 text-muted-foreground">
-                <p>カテゴリーデータがありません</p>
               </div>
             )}
           </CardContent>

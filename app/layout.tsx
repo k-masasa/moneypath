@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { LoadingProvider } from "@/components/loading-provider";
 import { SessionProvider } from "@/components/session-provider";
+import { TransactionDialogProvider } from "@/components/transaction-dialog-provider";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
@@ -19,8 +20,10 @@ export default function RootLayout({
       <body className="antialiased">
         <SessionProvider>
           <LoadingProvider>
-            {children}
-            <Toaster />
+            <TransactionDialogProvider>
+              {children}
+              <Toaster />
+            </TransactionDialogProvider>
           </LoadingProvider>
         </SessionProvider>
       </body>
