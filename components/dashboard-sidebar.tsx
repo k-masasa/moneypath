@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FileText, Tag, Target, Home, Settings, LogOut } from "lucide-react";
+import { FileText, Tag, Target, Home, Settings, LogOut, Calendar } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
@@ -16,6 +16,11 @@ const menuItems = [
     href: "/transactions",
     label: "収支管理",
     icon: FileText,
+  },
+  {
+    href: "/scheduled-payments",
+    label: "支払い予定",
+    icon: Calendar,
   },
   {
     href: "/categories",

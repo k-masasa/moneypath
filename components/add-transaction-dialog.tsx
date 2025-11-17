@@ -243,22 +243,12 @@ export function AddTransactionDialog({
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-              >
-                キャンセル
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1"
-              >
-                記録する
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              className="w-full"
+            >
+              記録する
+            </Button>
           </form>
         </CardContent>
       </Card>

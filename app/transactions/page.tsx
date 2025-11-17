@@ -11,10 +11,6 @@ import { Trash2, HelpCircle, Search, X, Edit, ChevronLeft, ChevronRight } from "
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
-import confetti from "canvas-confetti";
-import { ScheduledPaymentsList } from "@/components/scheduled-payments-list";
-import { CompletePaymentDialog } from "@/components/complete-payment-dialog";
-import { AddScheduledPaymentDialog } from "@/components/add-scheduled-payment-dialog";
 
 type Category = {
   id: string;
@@ -32,24 +28,12 @@ type Transaction = {
   createdAt: string;
 };
 
-type ScheduledPayment = {
-  id: string;
-  name: string;
-  estimatedAmount: number;
-  dueDate: string;
-  status: string;
-  category: Category;
-};
-
 export default function TransactionsPage() {
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoading();
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [scheduledPayments, setScheduledPayments] = useState<ScheduledPayment[]>([]);
-  const [selectedPayment, setSelectedPayment] = useState<ScheduledPayment | null>(null);
-  const [showAddPaymentDialog, setShowAddPaymentDialog] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -73,7 +57,6 @@ export default function TransactionsPage() {
   useEffect(() => {
     const initialLoad = async () => {
       await fetchData();
-      await fetchScheduledPayments();
       setIsInitialLoading(false);
     };
     initialLoad();
@@ -140,15 +123,6 @@ export default function TransactionsPage() {
     }
   };
 
-  const fetchScheduledPayments = async () => {
-    try {
-      const response = await fetch("/api/scheduled-payments");
-      const data = await response.json();
-      setScheduledPayments(data.scheduledPayments || []);
-    } catch (error) {
-      console.error("Failed to fetch scheduled payments:", error);
-    }
-  };
 
   const handleDelete = async (id: string) => {
     if (!confirm("この記録を削除しますか？")) return;
@@ -232,115 +206,6 @@ export default function TransactionsPage() {
     }
   };
 
-  const handlePaymentComplete = async (actualAmount: number) => {
-    if (!selectedPayment) return;
-
-    startLoading();
-    try {
-      const response = await fetch(
-        `/api/scheduled-payments/${selectedPayment.id}/complete`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ actualAmount }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to complete payment");
-
-      await Promise.all([fetchData(), fetchScheduledPayments()]);
-      setSelectedPayment(null);
-
-      toast({
-        title: "✅ 支払いを記録しました",
-        description: `¥${actualAmount.toLocaleString()} を記録しました`,
-      });
-
-      // 紙吹雪アニメーション
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ["#22c55e", "#10b981", "#059669"],
-      });
-    } catch (error) {
-      console.error("Payment completion error:", error);
-      toast({
-        title: "エラー",
-        description: "支払いの記録に失敗しました",
-        variant: "destructive",
-      });
-    } finally {
-      stopLoading();
-    }
-  };
-
-  const handleScheduledPaymentDelete = async (id: string) => {
-    startLoading();
-    try {
-      const response = await fetch(`/api/scheduled-payments/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) throw new Error("Failed to delete scheduled payment");
-
-      await fetchScheduledPayments();
-      toast({
-        title: "削除しました",
-        description: "支払い予定を削除しました",
-      });
-    } catch (error) {
-      console.error("Delete scheduled payment error:", error);
-      toast({
-        title: "エラー",
-        description: "削除に失敗しました",
-        variant: "destructive",
-      });
-    } finally {
-      stopLoading();
-    }
-  };
-
-  const handleAddScheduledPayment = async (data: {
-    name: string;
-    categoryId: string;
-    estimatedAmount: number;
-    dueDate: string;
-  }) => {
-    startLoading();
-    try {
-      const response = await fetch("/api/scheduled-payments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          dueDate: new Date(data.dueDate).toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API Error:", errorData);
-        throw new Error(errorData.error || "Failed to add scheduled payment");
-      }
-
-      await fetchScheduledPayments();
-      toast({
-        title: "✅ 登録しました",
-        description: `${data.name} を支払い予定に追加しました`,
-      });
-    } catch (error) {
-      console.error("Add scheduled payment error:", error);
-      toast({
-        title: "エラー",
-        description: error instanceof Error ? error.message : "登録に失敗しました",
-        variant: "destructive",
-      });
-      throw error;
-    } finally {
-      stopLoading();
-    }
-  };
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ja-JP", {
@@ -537,13 +402,6 @@ export default function TransactionsPage() {
               </CardContent>
             </Card>
 
-            {/* 支払い予定リスト */}
-            <ScheduledPaymentsList
-              scheduledPayments={scheduledPayments}
-              onPaymentClick={setSelectedPayment}
-              onDelete={handleScheduledPaymentDelete}
-              onAddClick={() => setShowAddPaymentDialog(true)}
-            />
           </>
         )}
       </div>
@@ -755,23 +613,6 @@ export default function TransactionsPage() {
         </div>
       )}
 
-      {/* 支払い完了ダイアログ */}
-      {selectedPayment && (
-        <CompletePaymentDialog
-          open={!!selectedPayment}
-          onClose={() => setSelectedPayment(null)}
-          scheduledPayment={selectedPayment}
-          onComplete={handlePaymentComplete}
-        />
-      )}
-
-      {/* 支払い予定追加ダイアログ */}
-      <AddScheduledPaymentDialog
-        open={showAddPaymentDialog}
-        onClose={() => setShowAddPaymentDialog(false)}
-        categories={categories}
-        onAdd={handleAddScheduledPayment}
-      />
     </div>
   );
 }
