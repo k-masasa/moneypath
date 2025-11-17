@@ -110,6 +110,9 @@ export function AddTransactionDialog({
         colors: ['#22c55e', '#10b981', '#059669'],
       });
 
+      // カスタムイベントを発火（transactionsページでリスニング）
+      window.dispatchEvent(new CustomEvent('transactionAdded'));
+
       // 金額欄に再フォーカス
       setTimeout(() => {
         amountInputRef.current?.focus();

@@ -134,7 +134,6 @@ export default function CategoriesPage() {
       type: category.type,
       order: category.order,
     });
-    setShowForm(true);
   };
 
   const handleDelete = async (id: string) => {

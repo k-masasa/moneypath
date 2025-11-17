@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoading } from "@/components/loading-provider";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, HelpCircle, Search, X, Edit, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, HelpCircle, Search, X, Edit, ChevronLeft, ChevronRight } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
+import confetti from "canvas-confetti";
 import { ScheduledPaymentsList } from "@/components/scheduled-payments-list";
 import { CompletePaymentDialog } from "@/components/complete-payment-dialog";
 import { AddScheduledPaymentDialog } from "@/components/add-scheduled-payment-dialog";
@@ -52,7 +53,6 @@ export default function TransactionsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [showTransactionsList, setShowTransactionsList] = useState(false); // 最近の記録の開閉状態（デフォルト閉じる）
   const [showSearch, setShowSearch] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     categoryId: "",
@@ -71,22 +71,42 @@ export default function TransactionsPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
-    fetchScheduledPayments();
-    setIsInitialLoading(false);
+    const initialLoad = async () => {
+      await fetchData();
+      await fetchScheduledPayments();
+      setIsInitialLoading(false);
+    };
+    initialLoad();
+
+    // 収支追加時のリロード処理
+    const handleTransactionAdded = () => {
+      fetchData();
+    };
+
+    window.addEventListener('transactionAdded', handleTransactionAdded);
+
+    return () => {
+      window.removeEventListener('transactionAdded', handleTransactionAdded);
+    };
   }, []);
 
   useEffect(() => {
-    fetchData();
+    if (!isInitialLoading) {
+      fetchData();
+    }
   }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
-    setCurrentPage(1);
-    fetchData();
+    if (!isInitialLoading) {
+      setCurrentPage(1);
+      fetchData();
+    }
   }, [searchFilters]);
 
   const fetchData = async () => {
-    startLoading();
+    if (!isInitialLoading) {
+      startLoading();
+    }
     try {
       const offset = (currentPage - 1) * itemsPerPage;
       const params = new URLSearchParams({
@@ -114,7 +134,9 @@ export default function TransactionsPage() {
     } catch (error) {
       console.error("Failed to fetch data:", error);
     } finally {
-      stopLoading();
+      if (!isInitialLoading) {
+        stopLoading();
+      }
     }
   };
 
@@ -381,19 +403,11 @@ export default function TransactionsPage() {
             <Card className="mb-8">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <div
-                    className="flex items-center gap-2 cursor-pointer flex-1"
-                    onClick={() => setShowTransactionsList(!showTransactionsList)}
-                  >
+                  <div className="flex items-center gap-2">
                     <CardTitle>収支履歴</CardTitle>
                     <span className="text-sm text-muted-foreground">
                       ({totalCount}件)
                     </span>
-                    {showTransactionsList ? (
-                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    )}
                   </div>
                   <Button
                     size="sm"
@@ -404,8 +418,7 @@ export default function TransactionsPage() {
                   </Button>
                 </div>
               </CardHeader>
-              {showTransactionsList && (
-                <CardContent>
+              <CardContent>
                 {transactions.length === 0 ? (
                   <p className="text-muted-foreground">まだ記録がありません</p>
                 ) : (
@@ -521,8 +534,7 @@ export default function TransactionsPage() {
                     </div>
                   </div>
                 )}
-                </CardContent>
-              )}
+              </CardContent>
             </Card>
 
             {/* 支払い予定リスト */}
