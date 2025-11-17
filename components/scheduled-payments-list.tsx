@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, Calendar, DollarSign, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, Calendar, DollarSign, Plus } from "lucide-react";
 
 type Category = {
   id: string;
@@ -33,7 +32,6 @@ export function ScheduledPaymentsList({
   onDelete,
   onAddClick,
 }: ScheduledPaymentsListProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ja-JP", {
       style: "currency",
@@ -66,17 +64,7 @@ export function ScheduledPaymentsList({
       <Card className="mb-8">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div
-              className="flex items-center gap-2 cursor-pointer flex-1"
-              onClick={() => setIsOpen(!isOpen)}
-            >
-              <CardTitle>支払い予定</CardTitle>
-              {isOpen ? (
-                <ChevronUp className="h-5 w-5 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-5 w-5 text-muted-foreground" />
-              )}
-            </div>
+            <CardTitle>支払い予定</CardTitle>
             <Button
               size="sm"
               onClick={onAddClick}
@@ -86,13 +74,11 @@ export function ScheduledPaymentsList({
             </Button>
           </div>
         </CardHeader>
-        {isOpen && (
-          <CardContent>
-            <p className="text-muted-foreground">
-              現在、支払い予定はありません
-            </p>
-          </CardContent>
-        )}
+        <CardContent>
+          <p className="text-muted-foreground">
+            現在、支払い予定はありません
+          </p>
+        </CardContent>
       </Card>
     );
   }
@@ -101,19 +87,11 @@ export function ScheduledPaymentsList({
     <Card className="mb-8">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div
-            className="flex items-center gap-2 cursor-pointer flex-1"
-            onClick={() => setIsOpen(!isOpen)}
-          >
+          <div className="flex items-center gap-2">
             <CardTitle>支払い予定</CardTitle>
             <span className="text-sm text-muted-foreground">
               ({pendingPayments.length}件)
             </span>
-            {isOpen ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-            )}
           </div>
           <Button
             size="sm"
@@ -124,8 +102,7 @@ export function ScheduledPaymentsList({
           </Button>
         </div>
       </CardHeader>
-      {isOpen && (
-        <CardContent>
+      <CardContent>
         <div className="space-y-3">
           {pendingPayments.map((payment) => {
             const overdue = isOverdue(payment.dueDate);
@@ -196,8 +173,7 @@ export function ScheduledPaymentsList({
             );
           })}
         </div>
-        </CardContent>
-      )}
+      </CardContent>
     </Card>
   );
 }
