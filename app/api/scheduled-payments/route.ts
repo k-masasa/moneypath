@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 // 支払い予定一覧取得
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const session = await auth();
 
@@ -11,10 +11,23 @@ export async function GET() {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
+    // URLパラメータから公的負担フラグを取得
+    const { searchParams } = new URL(request.url);
+    const isPublicBurdenParam = searchParams.get("isPublicBurden");
+
+    const where: any = {
+      userId: session.user.id,
+    };
+
+    // 公的負担フィルタリング
+    if (isPublicBurdenParam === "true") {
+      where.isPublicBurden = true;
+    } else if (isPublicBurdenParam === "false") {
+      where.isPublicBurden = false;
+    }
+
     const scheduledPayments = await prisma.scheduledPayment.findMany({
-      where: {
-        userId: session.user.id,
-      },
+      where,
       include: {
         category: true,
       },
@@ -43,7 +56,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, categoryId, estimatedAmount, dueDate } = body;
+    const { name, categoryId, estimatedAmount, dueDate, isPublicBurden } = body;
 
     // バリデーション
     if (!name || !categoryId || !estimatedAmount || !dueDate) {
@@ -78,6 +91,7 @@ export async function POST(request: Request) {
         estimatedAmount,
         dueDate: new Date(dueDate),
         status: "pending",
+        isPublicBurden: isPublicBurden || false,
       },
       include: {
         category: true,

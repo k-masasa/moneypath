@@ -63,7 +63,7 @@ export default function ScheduledPaymentsPage() {
       startLoading();
     }
     try {
-      const response = await fetch("/api/scheduled-payments");
+      const response = await fetch("/api/scheduled-payments?isPublicBurden=false");
       const data = await response.json();
       setScheduledPayments(data.scheduledPayments || []);
     } catch (error) {

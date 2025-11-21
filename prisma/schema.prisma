@@ -161,6 +161,7 @@ model ScheduledPayment {
   status          String    @default("pending") // "pending" or "completed"
   transactionId   String?   @unique @map("transaction_id")
   completedAt     DateTime? @map("completed_at")
+  isPublicBurden  Boolean   @default(false) @map("is_public_burden") // 公的負担フラグ
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
@@ -171,5 +172,6 @@ model ScheduledPayment {
 
   @@index([userId])
   @@index([userId, status])
+  @@index([userId, isPublicBurden])
   @@map("scheduled_payments")
 }
