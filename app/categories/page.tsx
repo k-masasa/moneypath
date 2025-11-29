@@ -11,6 +11,7 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
 import { Edit, Trash2 } from "lucide-react";
+import { EditCategoryDialog } from "@/components/edit-category-dialog";
 
 type Category = {
   id: string;
@@ -49,6 +50,7 @@ export default function CategoriesPage() {
   const { startLoading, stopLoading } = useLoading();
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     type: "expense" as "income" | "expense",
@@ -98,28 +100,16 @@ export default function CategoriesPage() {
     startLoading();
 
     try {
-      if (editingCategory) {
-        // 更新
-        const response = await fetch(`/api/categories/${editingCategory.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
+      // 新規作成のみ（編集はダイアログで行う）
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
 
-        if (!response.ok) throw new Error("Failed to update category");
-      } else {
-        // 新規作成
-        const response = await fetch("/api/categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
-
-        if (!response.ok) throw new Error("Failed to create category");
-      }
+      if (!response.ok) throw new Error("Failed to create category");
 
       await fetchCategories();
-      setEditingCategory(null);
       setFormData({ name: "", type: "expense", order: 0, isPublicBurden: false });
     } catch (error) {
       console.error("Submit error:", error);
@@ -131,12 +121,7 @@ export default function CategoriesPage() {
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setFormData({
-      name: category.name,
-      type: category.type,
-      order: category.order,
-      isPublicBurden: category.isPublicBurden || false,
-    });
+    setShowEditDialog(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -183,9 +168,7 @@ export default function CategoriesPage() {
         {/* フォーム */}
         <Card className="mb-6">
             <CardHeader>
-              <CardTitle>
-                {editingCategory ? "カテゴリー編集" : "新規カテゴリー"}
-              </CardTitle>
+              <CardTitle>新規カテゴリー</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -258,23 +241,9 @@ export default function CategoriesPage() {
                   </div>
                 )}
 
-                <div className="flex gap-4">
-                  <Button type="submit">
-                    {editingCategory ? "更新" : "作成"}
-                  </Button>
-                  {editingCategory && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setEditingCategory(null);
-                        setFormData({ name: "", type: "expense", order: 0, isPublicBurden: false });
-                      }}
-                    >
-                      キャンセル
-                    </Button>
-                  )}
-                </div>
+                <Button type="submit" className="w-full">
+                  作成
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -366,6 +335,17 @@ export default function CategoriesPage() {
           </div>
         </div>
       </div>
+
+      {/* 編集ダイアログ */}
+      <EditCategoryDialog
+        open={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingCategory(null);
+        }}
+        category={editingCategory}
+        onUpdate={fetchCategories}
+      />
     </div>
   );
 }
