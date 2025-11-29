@@ -60,38 +60,38 @@ function SortableItem({
   return (
     <div ref={setNodeRef} style={style}>
       <Card>
-        <CardContent className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
+        <CardContent className="flex items-center justify-between py-2 px-3">
+          <div className="flex items-center gap-2">
             <button
               className="cursor-grab active:cursor-grabbing touch-none"
               {...attributes}
               {...listeners}
             >
-              <GripVertical className="h-5 w-5 text-muted-foreground" />
+              <GripVertical className="h-4 w-4 text-muted-foreground" />
             </button>
-            <span className="font-medium">{category.name}</span>
+            <span className="text-sm font-medium">{category.name}</span>
             {category.isPublicBurden && (
-              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+              <span className="text-[10px] bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
                 公的負担
               </span>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <Button
               size="sm"
               variant="ghost"
               onClick={() => onEdit(category)}
-              className="cursor-pointer"
+              className="cursor-pointer h-7 w-7 p-0"
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="h-3.5 w-3.5" />
             </Button>
             <Button
               size="sm"
               variant="ghost"
               onClick={() => onDelete(category.id)}
-              className="text-destructive hover:text-destructive cursor-pointer"
+              className="text-destructive hover:text-destructive cursor-pointer h-7 w-7 p-0"
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3.5 w-3.5" />
             </Button>
           </div>
         </CardContent>
