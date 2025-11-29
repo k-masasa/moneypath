@@ -4,24 +4,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { X } from "lucide-react";
+import { X, Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/components/ui/use-toast";
+import { useLoading } from "@/components/loading-provider";
 
 type Category = {
   id: string;
   name: string;
   type: "income" | "expense";
+  isPublicBurden?: boolean;
+};
+
+type PaymentItem = {
+  amount: string;
+  dueDate: string;
 };
 
 type AddScheduledPaymentDialogProps = {
   open: boolean;
   onClose: () => void;
   categories: Category[];
-  onAdd: (data: {
-    name: string;
-    categoryId: string;
-    estimatedAmount: number;
-    dueDate: string;
-  }) => Promise<void>;
+  onAdd: () => Promise<void>;
 };
 
 export function AddScheduledPaymentDialog({
@@ -30,48 +33,107 @@ export function AddScheduledPaymentDialog({
   categories,
   onAdd,
 }: AddScheduledPaymentDialogProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    categoryId: "",
-    estimatedAmount: "",
-    dueDate: "",
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const { startLoading, stopLoading } = useLoading();
+  const [categoryId, setCategoryId] = useState("");
+  const [payments, setPayments] = useState<PaymentItem[]>([
+    { amount: "", dueDate: "" },
+  ]);
 
   // 支出カテゴリーのみフィルタリング
   const expenseCategories = categories.filter((c) => c.type === "expense");
 
   if (!open) return null;
 
+  const handleAddPayment = () => {
+    setPayments([...payments, { amount: "", dueDate: "" }]);
+  };
+
+  const handleRemovePayment = (index: number) => {
+    if (payments.length === 1) return;
+    setPayments(payments.filter((_, i) => i !== index));
+  };
+
+  const handlePaymentChange = (
+    index: number,
+    field: keyof PaymentItem,
+    value: string
+  ) => {
+    const newPayments = [...payments];
+    newPayments[index][field] = value;
+    setPayments(newPayments);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const amount = parseFloat(formData.estimatedAmount);
-    if (!formData.name || !formData.categoryId || amount <= 0 || !formData.dueDate) {
+    if (!categoryId) {
+      toast({
+        title: "入力エラー",
+        description: "カテゴリーを選択してください",
+        variant: "destructive",
+      });
       return;
     }
 
-    setIsSubmitting(true);
+    const invalidPayments = payments.filter(
+      (p) => !p.amount || !p.dueDate
+    );
+
+    if (invalidPayments.length > 0) {
+      toast({
+        title: "入力エラー",
+        description: "すべての金額と期限を入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    startLoading();
     try {
-      await onAdd({
-        name: formData.name,
-        categoryId: formData.categoryId,
-        estimatedAmount: amount,
-        dueDate: formData.dueDate,
+      const selectedCategory = expenseCategories.find(
+        (c) => c.id === categoryId
+      );
+      const categoryName = selectedCategory?.name || "";
+
+      // 各支払いを個別に登録
+      for (let i = 0; i < payments.length; i++) {
+        const payment = payments[i];
+        const response = await fetch("/api/scheduled-payments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: `${categoryName} (${i + 1}/${payments.length}回目)`,
+            categoryId,
+            estimatedAmount: parseFloat(payment.amount),
+            dueDate: new Date(payment.dueDate).toISOString(),
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to add scheduled payment");
+        }
+      }
+
+      await onAdd();
+      toast({
+        title: "✅ 登録しました",
+        description: `${categoryName}を${payments.length}件登録しました`,
       });
 
-      // フォームをリセット
-      setFormData({
-        name: "",
-        categoryId: "",
-        estimatedAmount: "",
-        dueDate: "",
-      });
+      // フォームリセット
+      setCategoryId("");
+      setPayments([{ amount: "", dueDate: "" }]);
       onClose();
     } catch (error) {
-      console.error("Add scheduled payment error:", error);
+      console.error("Submit error:", error);
+      toast({
+        title: "エラー",
+        description: "登録に失敗しました",
+        variant: "destructive",
+      });
     } finally {
-      setIsSubmitting(false);
+      stopLoading();
     }
   };
 
@@ -81,46 +143,27 @@ export function AddScheduledPaymentDialog({
       onClick={onClose}
     >
       <Card
-        className="w-full max-w-md mx-4"
+        className="w-full max-w-3xl mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>支払い予定を追加</CardTitle>
+            <CardTitle>支払い予定を登録</CardTitle>
             <Button size="sm" variant="ghost" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* カテゴリー選択 */}
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                支払い名 <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="name"
-                type="text"
-                required
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="例：健康保険、家賃"
-                autoFocus
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="categoryId" className="text-sm font-medium">
-                カテゴリー <span className="text-red-500">*</span>
+              <label className="text-sm font-medium">
+                カテゴリー
               </label>
               <select
-                id="categoryId"
-                value={formData.categoryId}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value })
-                }
+                value={categoryId}
+                onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full border rounded px-3 py-2"
                 required
               >
@@ -131,59 +174,77 @@ export function AddScheduledPaymentDialog({
                   </option>
                 ))}
               </select>
+              {expenseCategories.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  支出カテゴリーがありません。
+                  <br />
+                  カテゴリー管理で支出カテゴリーを作成してください。
+                </p>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="estimatedAmount" className="text-sm font-medium">
-                予定金額 <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="estimatedAmount"
-                type="number"
-                required
-                min="0"
-                step="1"
-                value={formData.estimatedAmount}
-                onChange={(e) =>
-                  setFormData({ ...formData, estimatedAmount: e.target.value })
-                }
-                placeholder="10000"
-              />
+            {/* 支払い一覧 */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">支払い予定（複数回登録可能）</label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAddPayment}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  追加
+                </Button>
+              </div>
+
+              {payments.map((payment, index) => (
+                <div key={index} className="flex gap-2 items-start">
+                  <div className="flex-1 space-y-2">
+                    <div className="text-xs font-medium text-muted-foreground">
+                      {index + 1}回目
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        type="number"
+                        placeholder="金額"
+                        value={payment.amount}
+                        onChange={(e) =>
+                          handlePaymentChange(index, "amount", e.target.value)
+                        }
+                        required
+                        min="0"
+                        step="1"
+                      />
+                      <Input
+                        type="date"
+                        value={payment.dueDate}
+                        onChange={(e) =>
+                          handlePaymentChange(index, "dueDate", e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+                  </div>
+                  {payments.length > 1 && (
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleRemovePayment(index)}
+                      className="text-destructive hover:text-destructive mt-6"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="dueDate" className="text-sm font-medium">
-                支払い期限 <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="dueDate"
-                type="date"
-                required
-                value={formData.dueDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, dueDate: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                className="flex-1"
-                disabled={isSubmitting}
-              >
-                キャンセル
-              </Button>
-              <Button
-                type="submit"
-                className="flex-1"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "登録中..." : "登録"}
-              </Button>
-            </div>
+            {/* 登録ボタン */}
+            <Button type="submit" className="w-full">
+              登録
+            </Button>
           </form>
         </CardContent>
       </Card>

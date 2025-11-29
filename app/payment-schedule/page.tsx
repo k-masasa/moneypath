@@ -12,7 +12,7 @@ import { useSession } from "next-auth/react";
 import confetti from "canvas-confetti";
 import { Trash2, Calendar, DollarSign, Plus } from "lucide-react";
 import { CompletePaymentDialog } from "@/components/complete-payment-dialog";
-import { AddPublicBurdenForm } from "@/components/add-public-burden-form";
+import { AddScheduledPaymentDialog } from "@/components/add-scheduled-payment-dialog";
 
 type Category = {
   id: string;
@@ -251,7 +251,7 @@ export default function PaymentSchedulePage() {
                   </div>
                   <Button size="sm" onClick={() => setShowAddForm(true)}>
                     <Plus className="h-4 w-4 mr-1" />
-                    一括登録
+                    新規登録
                   </Button>
                 </div>
               </CardHeader>
@@ -354,8 +354,8 @@ export default function PaymentSchedulePage() {
         />
       )}
 
-      {/* 一括登録フォーム */}
-      <AddPublicBurdenForm
+      {/* 支払い予定登録ダイアログ */}
+      <AddScheduledPaymentDialog
         open={showAddForm}
         onClose={() => setShowAddForm(false)}
         categories={categories}
