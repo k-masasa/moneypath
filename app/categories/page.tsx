@@ -12,6 +12,7 @@ import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
 import { Edit, Trash2 } from "lucide-react";
 import { EditCategoryDialog } from "@/components/edit-category-dialog";
+import { SortableCategoryList } from "@/components/sortable-category-list";
 
 type Category = {
   id: string;
@@ -54,7 +55,6 @@ export default function CategoriesPage() {
   const [formData, setFormData] = useState({
     name: "",
     type: "expense" as "income" | "expense",
-    order: 0,
     isPublicBurden: false,
   });
 
@@ -101,16 +101,23 @@ export default function CategoriesPage() {
 
     try {
       // 新規作成のみ（編集はダイアログで行う）
+      // 最大のorder値を取得して+1する
+      const maxOrder = categories.reduce((max, cat) => Math.max(max, cat.order), -1);
+      const newOrder = maxOrder + 1;
+
       const response = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          order: newOrder,
+        }),
       });
 
       if (!response.ok) throw new Error("Failed to create category");
 
       await fetchCategories();
-      setFormData({ name: "", type: "expense", order: 0, isPublicBurden: false });
+      setFormData({ name: "", type: "expense", isPublicBurden: false });
     } catch (error) {
       console.error("Submit error:", error);
       alert("カテゴリーの保存に失敗しました");
@@ -144,6 +151,28 @@ export default function CategoriesPage() {
     }
   };
 
+  const handleReorder = async (reorderedCategories: Category[]) => {
+    startLoading();
+    try {
+      // 各カテゴリのorder値を更新
+      const updatePromises = reorderedCategories.map((category) =>
+        fetch(`/api/categories/${category.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: category.order }),
+        })
+      );
+
+      await Promise.all(updatePromises);
+      await fetchCategories();
+    } catch (error) {
+      console.error("Reorder error:", error);
+      alert("並び替えの保存に失敗しました");
+    } finally {
+      stopLoading();
+    }
+  };
+
   const expenseCategories = categories.filter((c) => c.type === "expense");
   const incomeCategories = categories.filter((c) => c.type === "income");
 
@@ -172,7 +201,7 @@ export default function CategoriesPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">カテゴリー名</Label>
                     <Input
@@ -202,21 +231,6 @@ export default function CategoriesPage() {
                       <option value="expense">支出</option>
                       <option value="income">収入</option>
                     </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="order">表示順序</Label>
-                    <Input
-                      id="order"
-                      type="number"
-                      value={formData.order}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          order: parseInt(e.target.value) || 0,
-                        })
-                      }
-                    />
                   </div>
                 </div>
 
@@ -256,40 +270,12 @@ export default function CategoriesPage() {
               <h3 className="text-xl font-bold mb-4">
                 収入カテゴリー ({incomeCategories.length})
               </h3>
-              <div className="space-y-2">
-                {incomeCategories.map((category) => (
-                  <Card key={category.id}>
-                    <CardContent className="flex items-center justify-between p-4">
-                      <span className="font-medium">
-                        {category.name}
-                      </span>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(category)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(category.id)}
-                          className="text-destructive hover:text-destructive cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {incomeCategories.length === 0 && (
-                  <p className="text-muted-foreground text-sm">
-                    収入カテゴリーがありません
-                  </p>
-                )}
-              </div>
+              <SortableCategoryList
+                categories={incomeCategories}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onReorder={handleReorder}
+              />
             </div>
 
             {/* 支出カテゴリー */}
@@ -297,40 +283,12 @@ export default function CategoriesPage() {
               <h3 className="text-xl font-bold mb-4">
                 支出カテゴリー ({expenseCategories.length})
               </h3>
-              <div className="space-y-2">
-                {expenseCategories.map((category) => (
-                  <Card key={category.id}>
-                    <CardContent className="flex items-center justify-between p-4">
-                      <span className="font-medium">
-                        {category.name}
-                      </span>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(category)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(category.id)}
-                          className="text-destructive hover:text-destructive cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {expenseCategories.length === 0 && (
-                  <p className="text-muted-foreground text-sm">
-                    支出カテゴリーがありません
-                  </p>
-                )}
-              </div>
+              <SortableCategoryList
+                categories={expenseCategories}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onReorder={handleReorder}
+              />
             </div>
           </div>
         </div>

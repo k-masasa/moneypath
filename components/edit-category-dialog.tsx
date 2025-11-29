@@ -37,7 +37,6 @@ export function EditCategoryDialog({
   const [formData, setFormData] = useState({
     name: "",
     type: "expense" as "income" | "expense",
-    order: 0,
     isPublicBurden: false,
   });
 
@@ -46,7 +45,6 @@ export function EditCategoryDialog({
       setFormData({
         name: category.name,
         type: category.type,
-        order: category.order,
         isPublicBurden: category.isPublicBurden || false,
       });
     }
@@ -134,21 +132,6 @@ export function EditCategoryDialog({
                 <option value="expense">支出</option>
                 <option value="income">収入</option>
               </select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-category-order">表示順序</Label>
-              <Input
-                id="edit-category-order"
-                type="number"
-                value={formData.order}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    order: parseInt(e.target.value) || 0,
-                  })
-                }
-              />
             </div>
 
             {/* 公的負担チェックボックス */}
