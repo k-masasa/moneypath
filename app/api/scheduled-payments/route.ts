@@ -56,10 +56,10 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, categoryId, estimatedAmount, dueDate, isPublicBurden } = body;
+    const { categoryId, estimatedAmount, dueDate, memo } = body;
 
     // バリデーション
-    if (!name || !categoryId || !estimatedAmount || !dueDate) {
+    if (!categoryId || !estimatedAmount || !dueDate) {
       return NextResponse.json(
         { error: "必須項目が不足しています" },
         { status: 400 }
@@ -82,16 +82,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // カテゴリに公的負担フラグがあるか確認
+    const isPublicBurden = category.isPublicBurden || false;
+
     // 支払い予定を作成
     const scheduledPayment = await prisma.scheduledPayment.create({
       data: {
         userId: session.user.id,
-        name,
         categoryId,
         estimatedAmount,
         dueDate: new Date(dueDate),
+        memo: memo || null,
         status: "pending",
-        isPublicBurden: isPublicBurden || false,
+        isPublicBurden,
       },
       include: {
         category: true,

@@ -18,6 +18,7 @@ type Category = {
 type PaymentItem = {
   amount: string;
   dueDate: string;
+  memo: string;
 };
 
 type AddScheduledPaymentDialogProps = {
@@ -37,7 +38,7 @@ export function AddScheduledPaymentDialog({
   const { startLoading, stopLoading } = useLoading();
   const [categoryId, setCategoryId] = useState("");
   const [payments, setPayments] = useState<PaymentItem[]>([
-    { amount: "", dueDate: "" },
+    { amount: "", dueDate: "", memo: "" },
   ]);
 
   // 支出カテゴリーのみフィルタリング
@@ -46,7 +47,7 @@ export function AddScheduledPaymentDialog({
   if (!open) return null;
 
   const handleAddPayment = () => {
-    setPayments([...payments, { amount: "", dueDate: "" }]);
+    setPayments([...payments, { amount: "", dueDate: "", memo: "" }]);
   };
 
   const handleRemovePayment = (index: number) => {
@@ -91,11 +92,6 @@ export function AddScheduledPaymentDialog({
 
     startLoading();
     try {
-      const selectedCategory = expenseCategories.find(
-        (c) => c.id === categoryId
-      );
-      const categoryName = selectedCategory?.name || "";
-
       // 各支払いを個別に登録
       for (let i = 0; i < payments.length; i++) {
         const payment = payments[i];
@@ -103,10 +99,10 @@ export function AddScheduledPaymentDialog({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: `${categoryName} (${i + 1}/${payments.length}回目)`,
             categoryId,
             estimatedAmount: parseFloat(payment.amount),
             dueDate: new Date(payment.dueDate).toISOString(),
+            memo: payment.memo || null,
           }),
         });
 
@@ -118,12 +114,12 @@ export function AddScheduledPaymentDialog({
       await onAdd();
       toast({
         title: "✅ 登録しました",
-        description: `${categoryName}を${payments.length}件登録しました`,
+        description: `${payments.length}件の支払い予定を登録しました`,
       });
 
       // フォームリセット
       setCategoryId("");
-      setPayments([{ amount: "", dueDate: "" }]);
+      setPayments([{ amount: "", dueDate: "", memo: "" }]);
       onClose();
     } catch (error) {
       console.error("Submit error:", error);
@@ -225,6 +221,14 @@ export function AddScheduledPaymentDialog({
                         required
                       />
                     </div>
+                    <Input
+                      type="text"
+                      placeholder="メモ（任意）"
+                      value={payment.memo}
+                      onChange={(e) =>
+                        handlePaymentChange(index, "memo", e.target.value)
+                      }
+                    />
                   </div>
                   {payments.length > 1 && (
                     <Button

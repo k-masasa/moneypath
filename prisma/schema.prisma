@@ -156,10 +156,10 @@ model Transaction {
 model ScheduledPayment {
   id              String    @id @default(uuid())
   userId          String    @map("user_id")
-  name            String
   categoryId      String    @map("category_id")
   estimatedAmount Decimal   @db.Decimal(10, 2) @map("estimated_amount")
   dueDate         DateTime  @map("due_date")
+  memo            String?
   status          String    @default("pending") // "pending" or "completed"
   transactionId   String?   @unique @map("transaction_id")
   completedAt     DateTime? @map("completed_at")
