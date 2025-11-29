@@ -107,16 +107,17 @@ model Goal {
 
 // カテゴリー（科目）
 model Category {
-  id            String   @id @default(uuid())
-  userId        String   @map("user_id")
-  name          String
-  type          String   // "income" or "expense"
-  color         String?  // カラーコード（UI用）
-  icon          String?  // アイコン（絵文字など）
-  order         Int      @default(0) // 表示順序
-  monthlyBudget Decimal? @db.Decimal(10, 2) @map("monthly_budget") // 月間予算
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  name           String
+  type           String   // "income" or "expense"
+  color          String?  // カラーコード（UI用）
+  icon           String?  // アイコン（絵文字など）
+  order          Int      @default(0) // 表示順序
+  monthlyBudget  Decimal? @db.Decimal(10, 2) @map("monthly_budget") // 月間予算
+  isPublicBurden Boolean  @default(false) @map("is_public_burden") // 公的負担フラグ
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   // Relations
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -125,6 +126,7 @@ model Category {
 
   @@index([userId])
   @@index([userId, type])
+  @@index([userId, isPublicBurden])
   @@map("categories")
 }
 
@@ -154,10 +156,10 @@ model Transaction {
 model ScheduledPayment {
   id              String    @id @default(uuid())
   userId          String    @map("user_id")
-  name            String
   categoryId      String    @map("category_id")
   estimatedAmount Decimal   @db.Decimal(10, 2) @map("estimated_amount")
   dueDate         DateTime  @map("due_date")
+  memo            String?
   status          String    @default("pending") // "pending" or "completed"
   transactionId   String?   @unique @map("transaction_id")
   completedAt     DateTime? @map("completed_at")

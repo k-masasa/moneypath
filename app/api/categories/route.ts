@@ -9,6 +9,7 @@ const categorySchema = z.object({
   color: z.string().optional(),
   icon: z.string().optional(),
   order: z.number().int().optional(),
+  isPublicBurden: z.boolean().optional(),
 });
 
 // カテゴリー一覧取得

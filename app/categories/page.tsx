@@ -11,6 +11,8 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
 import { Edit, Trash2 } from "lucide-react";
+import { EditCategoryDialog } from "@/components/edit-category-dialog";
+import { SortableCategoryList } from "@/components/sortable-category-list";
 
 type Category = {
   id: string;
@@ -19,6 +21,7 @@ type Category = {
   color?: string;
   icon?: string;
   order: number;
+  isPublicBurden?: boolean;
 };
 
 const DEFAULT_CATEGORIES = [
@@ -48,10 +51,11 @@ export default function CategoriesPage() {
   const { startLoading, stopLoading } = useLoading();
   const [categories, setCategories] = useState<Category[]>([]);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     type: "expense" as "income" | "expense",
-    order: 0,
+    isPublicBurden: false,
   });
 
   useEffect(() => {
@@ -96,29 +100,24 @@ export default function CategoriesPage() {
     startLoading();
 
     try {
-      if (editingCategory) {
-        // 更新
-        const response = await fetch(`/api/categories/${editingCategory.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
+      // 新規作成のみ（編集はダイアログで行う）
+      // 最大のorder値を取得して+1する
+      const maxOrder = categories.reduce((max, cat) => Math.max(max, cat.order), -1);
+      const newOrder = maxOrder + 1;
 
-        if (!response.ok) throw new Error("Failed to update category");
-      } else {
-        // 新規作成
-        const response = await fetch("/api/categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          order: newOrder,
+        }),
+      });
 
-        if (!response.ok) throw new Error("Failed to create category");
-      }
+      if (!response.ok) throw new Error("Failed to create category");
 
       await fetchCategories();
-      setEditingCategory(null);
-      setFormData({ name: "", type: "expense", order: 0 });
+      setFormData({ name: "", type: "expense", isPublicBurden: false });
     } catch (error) {
       console.error("Submit error:", error);
       alert("カテゴリーの保存に失敗しました");
@@ -129,11 +128,7 @@ export default function CategoriesPage() {
 
   const handleEdit = (category: Category) => {
     setEditingCategory(category);
-    setFormData({
-      name: category.name,
-      type: category.type,
-      order: category.order,
-    });
+    setShowEditDialog(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -151,6 +146,28 @@ export default function CategoriesPage() {
     } catch (error) {
       console.error("Delete error:", error);
       alert("カテゴリーの削除に失敗しました");
+    } finally {
+      stopLoading();
+    }
+  };
+
+  const handleReorder = async (reorderedCategories: Category[]) => {
+    startLoading();
+    try {
+      // 各カテゴリのorder値を更新
+      const updatePromises = reorderedCategories.map((category) =>
+        fetch(`/api/categories/${category.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ order: category.order }),
+        })
+      );
+
+      await Promise.all(updatePromises);
+      await fetchCategories();
+    } catch (error) {
+      console.error("Reorder error:", error);
+      alert("並び替えの保存に失敗しました");
     } finally {
       stopLoading();
     }
@@ -180,13 +197,11 @@ export default function CategoriesPage() {
         {/* フォーム */}
         <Card className="mb-6">
             <CardHeader>
-              <CardTitle>
-                {editingCategory ? "カテゴリー編集" : "新規カテゴリー"}
-              </CardTitle>
+              <CardTitle>新規カテゴリー</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">カテゴリー名</Label>
                     <Input
@@ -217,40 +232,32 @@ export default function CategoriesPage() {
                       <option value="income">収入</option>
                     </select>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="order">表示順序</Label>
-                    <Input
-                      id="order"
-                      type="number"
-                      value={formData.order}
+                {/* 公的負担チェックボックス */}
+                {formData.type === "expense" && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isPublicBurden"
+                      checked={formData.isPublicBurden}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          order: parseInt(e.target.value) || 0,
+                          isPublicBurden: e.target.checked,
                         })
                       }
+                      className="h-4 w-4 rounded border-gray-300"
                     />
+                    <Label htmlFor="isPublicBurden" className="cursor-pointer">
+                      公的負担（税金・保険料など）
+                    </Label>
                   </div>
-                </div>
+                )}
 
-                <div className="flex gap-4">
-                  <Button type="submit">
-                    {editingCategory ? "更新" : "作成"}
-                  </Button>
-                  {editingCategory && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setEditingCategory(null);
-                        setFormData({ name: "", type: "expense", order: 0 });
-                      }}
-                    >
-                      キャンセル
-                    </Button>
-                  )}
-                </div>
+                <Button type="submit" className="w-full">
+                  作成
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -263,40 +270,12 @@ export default function CategoriesPage() {
               <h3 className="text-xl font-bold mb-4">
                 収入カテゴリー ({incomeCategories.length})
               </h3>
-              <div className="space-y-2">
-                {incomeCategories.map((category) => (
-                  <Card key={category.id}>
-                    <CardContent className="flex items-center justify-between p-4">
-                      <span className="font-medium">
-                        {category.name}
-                      </span>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(category)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(category.id)}
-                          className="text-destructive hover:text-destructive cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {incomeCategories.length === 0 && (
-                  <p className="text-muted-foreground text-sm">
-                    収入カテゴリーがありません
-                  </p>
-                )}
-              </div>
+              <SortableCategoryList
+                categories={incomeCategories}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onReorder={handleReorder}
+              />
             </div>
 
             {/* 支出カテゴリー */}
@@ -304,44 +283,27 @@ export default function CategoriesPage() {
               <h3 className="text-xl font-bold mb-4">
                 支出カテゴリー ({expenseCategories.length})
               </h3>
-              <div className="space-y-2">
-                {expenseCategories.map((category) => (
-                  <Card key={category.id}>
-                    <CardContent className="flex items-center justify-between p-4">
-                      <span className="font-medium">
-                        {category.name}
-                      </span>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleEdit(category)}
-                          className="cursor-pointer"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => handleDelete(category.id)}
-                          className="text-destructive hover:text-destructive cursor-pointer"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-                {expenseCategories.length === 0 && (
-                  <p className="text-muted-foreground text-sm">
-                    支出カテゴリーがありません
-                  </p>
-                )}
-              </div>
+              <SortableCategoryList
+                categories={expenseCategories}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onReorder={handleReorder}
+              />
             </div>
           </div>
         </div>
       </div>
+
+      {/* 編集ダイアログ */}
+      <EditCategoryDialog
+        open={showEditDialog}
+        onClose={() => {
+          setShowEditDialog(false);
+          setEditingCategory(null);
+        }}
+        category={editingCategory}
+        onUpdate={fetchCategories}
+      />
     </div>
   );
 }
