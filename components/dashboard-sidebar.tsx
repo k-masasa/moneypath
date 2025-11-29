@@ -18,14 +18,9 @@ const menuItems = [
     icon: FileText,
   },
   {
-    href: "/scheduled-payments",
+    href: "/payment-schedule",
     label: "支払い予定",
     icon: Calendar,
-  },
-  {
-    href: "/public-burdens",
-    label: "公的負担",
-    icon: Receipt,
   },
   {
     href: "/categories",

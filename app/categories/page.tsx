@@ -19,6 +19,7 @@ type Category = {
   color?: string;
   icon?: string;
   order: number;
+  isPublicBurden?: boolean;
 };
 
 const DEFAULT_CATEGORIES = [
@@ -52,6 +53,7 @@ export default function CategoriesPage() {
     name: "",
     type: "expense" as "income" | "expense",
     order: 0,
+    isPublicBurden: false,
   });
 
   useEffect(() => {
@@ -118,7 +120,7 @@ export default function CategoriesPage() {
 
       await fetchCategories();
       setEditingCategory(null);
-      setFormData({ name: "", type: "expense", order: 0 });
+      setFormData({ name: "", type: "expense", order: 0, isPublicBurden: false });
     } catch (error) {
       console.error("Submit error:", error);
       alert("カテゴリーの保存に失敗しました");
@@ -133,6 +135,7 @@ export default function CategoriesPage() {
       name: category.name,
       type: category.type,
       order: category.order,
+      isPublicBurden: category.isPublicBurden || false,
     });
   };
 
@@ -234,6 +237,27 @@ export default function CategoriesPage() {
                   </div>
                 </div>
 
+                {/* 公的負担チェックボックス */}
+                {formData.type === "expense" && (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="isPublicBurden"
+                      checked={formData.isPublicBurden}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          isPublicBurden: e.target.checked,
+                        })
+                      }
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Label htmlFor="isPublicBurden" className="cursor-pointer">
+                      公的負担（税金・保険料など）
+                    </Label>
+                  </div>
+                )}
+
                 <div className="flex gap-4">
                   <Button type="submit">
                     {editingCategory ? "更新" : "作成"}
@@ -244,7 +268,7 @@ export default function CategoriesPage() {
                       variant="outline"
                       onClick={() => {
                         setEditingCategory(null);
-                        setFormData({ name: "", type: "expense", order: 0 });
+                        setFormData({ name: "", type: "expense", order: 0, isPublicBurden: false });
                       }}
                     >
                       キャンセル

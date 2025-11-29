@@ -21,7 +21,7 @@ type Category = {
   icon?: string;
 };
 
-type PublicBurden = {
+type ScheduledPayment = {
   id: string;
   name: string;
   estimatedAmount: number;
@@ -30,19 +30,19 @@ type PublicBurden = {
   category: Category;
 };
 
-export default function PublicBurdensPage() {
+export default function PaymentSchedulePage() {
   const { data: session } = useSession();
   const { startLoading, stopLoading } = useLoading();
   const { toast } = useToast();
   const [categories, setCategories] = useState<Category[]>([]);
-  const [publicBurdens, setPublicBurdens] = useState<PublicBurden[]>([]);
-  const [selectedBurden, setSelectedBurden] = useState<PublicBurden | null>(null);
+  const [scheduledPayments, setScheduledPayments] = useState<ScheduledPayment[]>([]);
+  const [selectedPayment, setSelectedPayment] = useState<ScheduledPayment | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
     const initialLoad = async () => {
-      await Promise.all([fetchCategories(), fetchPublicBurdens()]);
+      await Promise.all([fetchCategories(), fetchScheduledPayments()]);
       setIsInitialLoading(false);
     };
     initialLoad();
@@ -58,16 +58,17 @@ export default function PublicBurdensPage() {
     }
   };
 
-  const fetchPublicBurdens = async () => {
+  const fetchScheduledPayments = async () => {
     if (!isInitialLoading) {
       startLoading();
     }
     try {
-      const response = await fetch("/api/scheduled-payments?isPublicBurden=true");
+      // すべての支払い予定を取得（公的負担もそれ以外も）
+      const response = await fetch("/api/scheduled-payments");
       const data = await response.json();
-      setPublicBurdens(data.scheduledPayments || []);
+      setScheduledPayments(data.scheduledPayments || []);
     } catch (error) {
-      console.error("Failed to fetch public burdens:", error);
+      console.error("Failed to fetch scheduled payments:", error);
     } finally {
       if (!isInitialLoading) {
         stopLoading();
@@ -76,12 +77,12 @@ export default function PublicBurdensPage() {
   };
 
   const handlePaymentComplete = async (actualAmount: number) => {
-    if (!selectedBurden) return;
+    if (!selectedPayment) return;
 
     startLoading();
     try {
       const response = await fetch(
-        `/api/scheduled-payments/${selectedBurden.id}/complete`,
+        `/api/scheduled-payments/${selectedPayment.id}/complete`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -91,8 +92,8 @@ export default function PublicBurdensPage() {
 
       if (!response.ok) throw new Error("Failed to complete payment");
 
-      await fetchPublicBurdens();
-      setSelectedBurden(null);
+      await fetchScheduledPayments();
+      setSelectedPayment(null);
 
       toast({
         title: "✅ 支払いを記録しました",
@@ -125,12 +126,12 @@ export default function PublicBurdensPage() {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Failed to delete public burden");
+      if (!response.ok) throw new Error("Failed to delete scheduled payment");
 
-      await fetchPublicBurdens();
+      await fetchScheduledPayments();
       toast({
         title: "削除しました",
-        description: "公的負担を削除しました",
+        description: "支払い予定を削除しました",
       });
     } catch (error) {
       console.error("Delete error:", error);
@@ -167,16 +168,16 @@ export default function PublicBurdensPage() {
     return dueDate < today;
   };
 
-  const pendingBurdens = publicBurdens.filter((b) => b.status === "pending");
-  const completedBurdens = publicBurdens.filter((b) => b.status === "completed");
+  const pendingPayments = scheduledPayments.filter((p) => p.status === "pending");
+  const completedPayments = scheduledPayments.filter((p) => p.status === "completed");
 
-  // 年間合計額計算
-  const totalPending = pendingBurdens.reduce(
-    (sum, b) => sum + b.estimatedAmount,
+  // 合計額計算
+  const totalPending = pendingPayments.reduce(
+    (sum, p) => sum + p.estimatedAmount,
     0
   );
-  const totalCompleted = completedBurdens.reduce(
-    (sum, b) => sum + b.estimatedAmount,
+  const totalCompleted = completedPayments.reduce(
+    (sum, p) => sum + p.estimatedAmount,
     0
   );
   const totalAmount = totalPending + totalCompleted;
@@ -198,7 +199,7 @@ export default function PublicBurdensPage() {
             <CardHeader>
               <CardTitle>カテゴリーが未設定です</CardTitle>
               <CardDescription>
-                公的負担を登録する前に、カテゴリーを作成してください。
+                支払い予定を登録する前に、カテゴリーを作成してください。
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -212,7 +213,7 @@ export default function PublicBurdensPage() {
             {/* サマリーカード */}
             <Card className="mb-8">
               <CardHeader>
-                <CardTitle>年間公的負担サマリー</CardTitle>
+                <CardTitle>支払い予定サマリー</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -238,14 +239,14 @@ export default function PublicBurdensPage() {
               </CardContent>
             </Card>
 
-            {/* 公的負担リスト */}
+            {/* 支払い予定リスト */}
             <Card className="mb-8">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CardTitle>公的負担一覧</CardTitle>
+                    <CardTitle>支払い予定一覧</CardTitle>
                     <span className="text-sm text-muted-foreground">
-                      ({pendingBurdens.length}件未払い)
+                      ({pendingPayments.length}件未払い)
                     </span>
                   </div>
                   <Button size="sm" onClick={() => setShowAddForm(true)}>
@@ -255,18 +256,18 @@ export default function PublicBurdensPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                {pendingBurdens.length === 0 ? (
+                {pendingPayments.length === 0 ? (
                   <p className="text-muted-foreground">
-                    現在、未払いの公的負担はありません
+                    現在、未払いの支払い予定はありません
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {pendingBurdens.map((burden) => {
-                      const overdue = isOverdue(burden.dueDate);
+                    {pendingPayments.map((payment) => {
+                      const overdue = isOverdue(payment.dueDate);
 
                       return (
                         <div
-                          key={burden.id}
+                          key={payment.id}
                           className={`border rounded-lg p-4 ${
                             overdue
                               ? "border-red-500 bg-red-50 dark:bg-red-950/20"
@@ -277,7 +278,7 @@ export default function PublicBurdensPage() {
                             <div className="flex-1 space-y-2">
                               <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-base">
-                                  {burden.name}
+                                  {payment.name}
                                 </h3>
                                 {overdue && (
                                   <span className="text-xs bg-red-500 text-white px-2 py-1 rounded">
@@ -290,7 +291,7 @@ export default function PublicBurdensPage() {
                                 <div className="flex items-center gap-1">
                                   <DollarSign className="h-4 w-4" />
                                   <span className="font-medium">
-                                    {formatCurrency(burden.estimatedAmount)}
+                                    {formatCurrency(payment.estimatedAmount)}
                                   </span>
                                 </div>
 
@@ -301,12 +302,12 @@ export default function PublicBurdensPage() {
                                       overdue ? "text-red-600 font-medium" : ""
                                     }
                                   >
-                                    {formatDate(burden.dueDate)}
+                                    {formatDate(payment.dueDate)}
                                   </span>
                                 </div>
 
                                 <div className="text-xs bg-muted px-2 py-1 rounded">
-                                  {burden.category.name}
+                                  {payment.category.name}
                                 </div>
                               </div>
                             </div>
@@ -314,7 +315,7 @@ export default function PublicBurdensPage() {
                             <div className="flex gap-2">
                               <Button
                                 size="sm"
-                                onClick={() => setSelectedBurden(burden)}
+                                onClick={() => setSelectedPayment(payment)}
                               >
                                 支払う
                               </Button>
@@ -322,8 +323,8 @@ export default function PublicBurdensPage() {
                                 size="sm"
                                 variant="ghost"
                                 onClick={async () => {
-                                  if (confirm("この公的負担を削除しますか？")) {
-                                    await handleDelete(burden.id);
+                                  if (confirm("この支払い予定を削除しますか？")) {
+                                    await handleDelete(payment.id);
                                   }
                                 }}
                                 className="text-destructive hover:text-destructive"
@@ -344,11 +345,11 @@ export default function PublicBurdensPage() {
       </div>
 
       {/* 支払い完了ダイアログ */}
-      {selectedBurden && (
+      {selectedPayment && (
         <CompletePaymentDialog
-          open={!!selectedBurden}
-          onClose={() => setSelectedBurden(null)}
-          scheduledPayment={selectedBurden}
+          open={!!selectedPayment}
+          onClose={() => setSelectedPayment(null)}
+          scheduledPayment={selectedPayment}
           onComplete={handlePaymentComplete}
         />
       )}
@@ -358,7 +359,7 @@ export default function PublicBurdensPage() {
         open={showAddForm}
         onClose={() => setShowAddForm(false)}
         categories={categories}
-        onAdd={fetchPublicBurdens}
+        onAdd={fetchScheduledPayments}
       />
     </div>
   );

@@ -12,6 +12,7 @@ type Category = {
   id: string;
   name: string;
   type: "income" | "expense";
+  isPublicBurden?: boolean;
 };
 
 type PaymentItem = {
@@ -26,14 +27,6 @@ type AddPublicBurdenFormProps = {
   onAdd: () => Promise<void>;
 };
 
-const PUBLIC_BURDEN_TYPES = [
-  { value: "resident_tax", label: "住民税" },
-  { value: "health_insurance", label: "健康保険料" },
-  { value: "pension", label: "国民年金" },
-  { value: "income_tax", label: "所得税" },
-  { value: "consumption_tax", label: "消費税" },
-];
-
 export function AddPublicBurdenForm({
   open,
   onClose,
@@ -42,13 +35,15 @@ export function AddPublicBurdenForm({
 }: AddPublicBurdenFormProps) {
   const { toast } = useToast();
   const { startLoading, stopLoading } = useLoading();
-  const [burdenType, setBurdenType] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [payments, setPayments] = useState<PaymentItem[]>([
     { amount: "", dueDate: "" },
   ]);
 
-  const expenseCategories = categories.filter((c) => c.type === "expense");
+  // 公的負担カテゴリーのみフィルタリング
+  const publicBurdenCategories = categories.filter(
+    (c) => c.type === "expense" && c.isPublicBurden
+  );
 
   if (!open) return null;
 
@@ -74,10 +69,10 @@ export function AddPublicBurdenForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!burdenType || !categoryId) {
+    if (!categoryId) {
       toast({
         title: "入力エラー",
-        description: "種類とカテゴリーを選択してください",
+        description: "カテゴリーを選択してください",
         variant: "destructive",
       });
       return;
@@ -98,8 +93,10 @@ export function AddPublicBurdenForm({
 
     startLoading();
     try {
-      const burdenTypeName =
-        PUBLIC_BURDEN_TYPES.find((t) => t.value === burdenType)?.label || "";
+      const selectedCategory = publicBurdenCategories.find(
+        (c) => c.id === categoryId
+      );
+      const categoryName = selectedCategory?.name || "";
 
       // 各支払いを個別に登録
       for (let i = 0; i < payments.length; i++) {
@@ -108,7 +105,7 @@ export function AddPublicBurdenForm({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: `${burdenTypeName} (${i + 1}/${payments.length}回目)`,
+            name: `${categoryName} (${i + 1}/${payments.length}回目)`,
             categoryId,
             estimatedAmount: parseFloat(payment.amount),
             dueDate: new Date(payment.dueDate).toISOString(),
@@ -124,11 +121,10 @@ export function AddPublicBurdenForm({
       await onAdd();
       toast({
         title: "✅ 登録しました",
-        description: `${burdenTypeName}を${payments.length}件登録しました`,
+        description: `${categoryName}を${payments.length}件登録しました`,
       });
 
       // フォームリセット
-      setBurdenType("");
       setCategoryId("");
       setPayments([{ amount: "", dueDate: "" }]);
       onClose();
@@ -163,27 +159,11 @@ export function AddPublicBurdenForm({
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 種類選択 */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">種類</label>
-              <select
-                value={burdenType}
-                onChange={(e) => setBurdenType(e.target.value)}
-                className="w-full border rounded px-3 py-2"
-                required
-              >
-                <option value="">選択してください</option>
-                {PUBLIC_BURDEN_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* カテゴリー選択 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">カテゴリー（科目）</label>
+              <label className="text-sm font-medium">
+                公的負担の種類（カテゴリー）
+              </label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -191,12 +171,19 @@ export function AddPublicBurdenForm({
                 required
               >
                 <option value="">選択してください</option>
-                {expenseCategories.map((cat) => (
+                {publicBurdenCategories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
               </select>
+              {publicBurdenCategories.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  公的負担カテゴリーがありません。
+                  <br />
+                  カテゴリー管理で「公的負担」フラグを立てたカテゴリーを作成してください。
+                </p>
+              )}
             </div>
 
             {/* 支払い一覧 */}
