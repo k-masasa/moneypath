@@ -32,6 +32,9 @@ export async function PUT(
         id,
         userId: session.user.id,
       },
+      include: {
+        category: true,
+      },
     });
 
     if (!scheduledPayment) {
@@ -56,7 +59,7 @@ export async function PUT(
           userId: session.user.id,
           categoryId: scheduledPayment.categoryId,
           amount: actualAmount,
-          description: scheduledPayment.name,
+          description: scheduledPayment.memo || scheduledPayment.category.name,
           date: new Date(), // 今日の日付
         },
       });

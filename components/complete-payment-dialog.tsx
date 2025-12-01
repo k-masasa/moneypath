@@ -11,8 +11,11 @@ type CompletePaymentDialogProps = {
   onClose: () => void;
   scheduledPayment: {
     id: string;
-    name: string;
     estimatedAmount: number;
+    memo?: string | null;
+    category: {
+      name: string;
+    };
   };
   onComplete: (actualAmount: number) => Promise<void>;
 };
@@ -69,11 +72,20 @@ export function CompletePaymentDialog({
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">支払い名</label>
+              <label className="text-sm font-medium">カテゴリ</label>
               <div className="text-base font-semibold">
-                {scheduledPayment.name}
+                {scheduledPayment.category.name}
               </div>
             </div>
+
+            {scheduledPayment.memo && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">メモ</label>
+                <div className="text-sm text-muted-foreground">
+                  {scheduledPayment.memo}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="text-sm font-medium">予定金額</label>
