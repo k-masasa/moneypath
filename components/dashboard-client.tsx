@@ -442,7 +442,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                       }}
                     />
                     <YAxis
-                      yAxisId="left"
                       stroke="#666"
                       tick={{ fill: '#666', fontSize: 12 }}
                       tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
@@ -460,23 +459,8 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                         return ticks;
                       })()}
                     />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      domain={[0, 100]}
-                      hide
-                    />
                     <Tooltip
-                      formatter={(value: number, name: string, props: any) => {
-                        if (name === '貯蓄額') {
-                          // 貯蓄額を計算
-                          const income = props.payload.totalIncome || 0;
-                          const expense = props.payload.totalExpense || 0;
-                          const savings = income - expense;
-                          return formatCurrency(savings);
-                        }
-                        return formatCurrency(value);
-                      }}
+                      formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{
                         backgroundColor: '#fff',
                         border: '1px solid #e0e0e0',
@@ -485,7 +469,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                     />
                     <Legend />
                     <Line
-                      yAxisId="left"
                       type="monotone"
                       dataKey="totalIncome"
                       stroke="#22c55e"
@@ -494,22 +477,12 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                       name="収入"
                     />
                     <Line
-                      yAxisId="left"
                       type="monotone"
                       dataKey="totalExpense"
                       stroke="#ef4444"
                       strokeWidth={2}
                       dot={{ fill: '#ef4444', r: 4 }}
                       name="支出"
-                    />
-                    <Line
-                      yAxisId="right"
-                      type="monotone"
-                      dataKey="savingsRate"
-                      stroke="#6b7280"
-                      strokeWidth={2}
-                      dot={{ fill: '#6b7280', r: 4 }}
-                      name="貯蓄額"
                     />
                   </LineChart>
                 </ResponsiveContainer>
