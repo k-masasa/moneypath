@@ -406,14 +406,14 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
             </CardHeader>
             <CardContent>
               {isTrendLoading ? (
-                <div className="w-full h-[400px] flex items-center justify-center">
+                <div className="w-full h-[500px] flex items-center justify-center">
                   <div className="flex flex-col items-center gap-4">
                     <Wallet className="h-12 w-12 animate-pulse text-primary" />
                     <p className="text-sm text-muted-foreground">データを読み込んでいます...</p>
                   </div>
                 </div>
               ) : (
-                <div className="w-full h-[400px]">
+                <div className="w-full h-[500px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />

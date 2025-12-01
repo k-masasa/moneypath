@@ -26,12 +26,16 @@ export async function GET(request: Request) {
       });
     }
 
-    // 開始日以降のトランザクションを取得
+    // 開始日以降、今日までのトランザクションを取得（将来の日付は除外）
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // 今日の終わりまで含める
+
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: session.user.id,
         date: {
           gte: user.balanceStartDate,
+          lte: today, // 今日以前のみ
         },
       },
       include: {
