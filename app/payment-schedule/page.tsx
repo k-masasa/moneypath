@@ -10,9 +10,10 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
 import confetti from "canvas-confetti";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Edit } from "lucide-react";
 import { CompletePaymentDialog } from "@/components/complete-payment-dialog";
 import { AddScheduledPaymentDialog } from "@/components/add-scheduled-payment-dialog";
+import { EditScheduledPaymentDialog } from "@/components/edit-scheduled-payment-dialog";
 
 type Category = {
   id: string;
@@ -27,6 +28,7 @@ type ScheduledPayment = {
   dueDate: string;
   memo?: string | null;
   status: string;
+  categoryId: string;
   category: Category;
 };
 
@@ -39,6 +41,7 @@ export default function PaymentSchedulePage() {
   const [selectedPayment, setSelectedPayment] = useState<ScheduledPayment | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [editingPayment, setEditingPayment] = useState<ScheduledPayment | null>(null);
 
   useEffect(() => {
     const initialLoad = async () => {
@@ -172,7 +175,7 @@ export default function PaymentSchedulePage() {
 
   // 未払い合計額計算
   const totalPending = pendingPayments.reduce(
-    (sum, p) => sum + p.estimatedAmount,
+    (sum, p) => sum + Number(p.estimatedAmount),
     0
   );
 
@@ -277,6 +280,13 @@ export default function PaymentSchedulePage() {
                                   <Button
                                     size="sm"
                                     variant="ghost"
+                                    onClick={() => setEditingPayment(payment)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
                                     onClick={async () => {
                                       if (confirm("この支払い予定を削除しますか？")) {
                                         await handleDelete(payment.id);
@@ -317,6 +327,15 @@ export default function PaymentSchedulePage() {
         onClose={() => setShowAddForm(false)}
         categories={categories}
         onAdd={fetchScheduledPayments}
+      />
+
+      {/* 支払い予定編集ダイアログ */}
+      <EditScheduledPaymentDialog
+        open={!!editingPayment}
+        onClose={() => setEditingPayment(null)}
+        scheduledPayment={editingPayment}
+        categories={categories}
+        onUpdate={fetchScheduledPayments}
       />
     </div>
   );
