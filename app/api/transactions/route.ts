@@ -29,7 +29,27 @@ export async function GET(request: Request) {
     const where: any = { userId: session.user.id };
 
     if (categoryId) {
-      where.categoryId = categoryId;
+      // カテゴリーを取得して、子カテゴリーがあるかチェック
+      const selectedCategory = await prisma.category.findUnique({
+        where: { id: categoryId },
+        include: {
+          subCategories: {
+            select: { id: true },
+          },
+        },
+      });
+
+      if (selectedCategory && selectedCategory.subCategories.length > 0) {
+        // 親カテゴリーの場合: 親と子の両方を検索対象にする
+        const categoryIds = [
+          categoryId,
+          ...selectedCategory.subCategories.map((sub) => sub.id),
+        ];
+        where.categoryId = { in: categoryIds };
+      } else {
+        // 子カテゴリーまたは子を持たないカテゴリーの場合: そのカテゴリーのみ
+        where.categoryId = categoryId;
+      }
     }
 
     if (startDate || endDate) {
