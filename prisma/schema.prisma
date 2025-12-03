@@ -107,26 +107,32 @@ model Goal {
 
 // カテゴリー（科目）
 model Category {
-  id             String   @id @default(uuid())
-  userId         String   @map("user_id")
-  name           String
-  type           String   // "income" or "expense"
-  color          String?  // カラーコード（UI用）
-  icon           String?  // アイコン（絵文字など）
-  order          Int      @default(0) // 表示順序
-  monthlyBudget  Decimal? @db.Decimal(10, 2) @map("monthly_budget") // 月間予算
-  isPublicBurden Boolean  @default(false) @map("is_public_burden") // 公的負担フラグ
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  name             String
+  type             String   // "income" or "expense"
+  color            String?  // カラーコード（UI用）
+  icon             String?  // アイコン（絵文字など）
+  order            Int      @default(0) // 表示順序
+  monthlyBudget    Decimal? @db.Decimal(10, 2) @map("monthly_budget") // 月間予算
+  isPublicBurden   Boolean  @default(false) @map("is_public_burden") // 公的負担フラグ
+  parentCategoryId String?  @map("parent_category_id") // 親カテゴリーID
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Relations
   user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions      Transaction[]
   scheduledPayments ScheduledPayment[]
 
+  // 自己参照リレーション（親子カテゴリー）
+  parentCategory    Category?  @relation("CategoryHierarchy", fields: [parentCategoryId], references: [id], onDelete: SetNull)
+  subCategories     Category[] @relation("CategoryHierarchy")
+
   @@index([userId])
   @@index([userId, type])
   @@index([userId, isPublicBurden])
+  @@index([parentCategoryId])
   @@map("categories")
 }
 

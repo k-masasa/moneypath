@@ -17,6 +17,17 @@ type Category = {
   icon?: string;
   order: number;
   isPublicBurden?: boolean;
+  parentCategoryId?: string | null;
+  parentCategory?: {
+    id: string;
+    name: string;
+  } | null;
+  subCategories?: {
+    id: string;
+    name: string;
+    type: "income" | "expense";
+    order: number;
+  }[];
 };
 
 type EditCategoryDialogProps = {
@@ -24,6 +35,7 @@ type EditCategoryDialogProps = {
   onClose: () => void;
   category: Category | null;
   onUpdate: () => Promise<void>;
+  allCategories: Category[]; // 親カテゴリー選択用
 };
 
 export function EditCategoryDialog({
@@ -31,6 +43,7 @@ export function EditCategoryDialog({
   onClose,
   category,
   onUpdate,
+  allCategories,
 }: EditCategoryDialogProps) {
   const { toast } = useToast();
   const { startLoading, stopLoading } = useLoading();
@@ -38,6 +51,7 @@ export function EditCategoryDialog({
     name: "",
     type: "expense" as "income" | "expense",
     isPublicBurden: false,
+    parentCategoryId: null as string | null,
   });
 
   useEffect(() => {
@@ -46,6 +60,7 @@ export function EditCategoryDialog({
         name: category.name,
         type: category.type,
         isPublicBurden: category.isPublicBurden || false,
+        parentCategoryId: category.parentCategoryId || null,
       });
     }
   }, [category]);
@@ -125,12 +140,48 @@ export function EditCategoryDialog({
                   setFormData({
                     ...formData,
                     type: e.target.value as "income" | "expense",
+                    parentCategoryId: null, // タイプ変更時に親カテゴリーをリセット
                   })
                 }
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="expense">支出</option>
                 <option value="income">収入</option>
+              </select>
+            </div>
+
+            {/* 親カテゴリー選択 */}
+            <div className="space-y-2">
+              <Label htmlFor="edit-parent-category">親カテゴリー（任意）</Label>
+              <select
+                id="edit-parent-category"
+                value={formData.parentCategoryId || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    parentCategoryId: e.target.value || null,
+                  })
+                }
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">なし（親カテゴリー）</option>
+                {allCategories
+                  .filter((c) => {
+                    // 同じタイプのみ
+                    if (c.type !== formData.type) return false;
+                    // 自分自身は除外
+                    if (c.id === category?.id) return false;
+                    // 自分の子カテゴリーは除外（循環参照防止）
+                    if (c.parentCategoryId === category?.id) return false;
+                    // 親カテゴリーのみ表示
+                    if (c.parentCategoryId) return false;
+                    return true;
+                  })
+                  .map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
               </select>
             </div>
 
