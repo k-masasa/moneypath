@@ -22,6 +22,17 @@ type Category = {
   icon?: string;
   order: number;
   isPublicBurden?: boolean;
+  parentCategoryId?: string | null;
+  parentCategory?: {
+    id: string;
+    name: string;
+  } | null;
+  subCategories?: {
+    id: string;
+    name: string;
+    type: "income" | "expense";
+    order: number;
+  }[];
 };
 
 const DEFAULT_CATEGORIES = [
@@ -56,6 +67,7 @@ export default function CategoriesPage() {
     name: "",
     type: "expense" as "income" | "expense",
     isPublicBurden: false,
+    parentCategoryId: "" as string | null,
   });
 
   useEffect(() => {
@@ -110,6 +122,7 @@ export default function CategoriesPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          parentCategoryId: formData.parentCategoryId || null,
           order: newOrder,
         }),
       });
@@ -117,7 +130,7 @@ export default function CategoriesPage() {
       if (!response.ok) throw new Error("Failed to create category");
 
       await fetchCategories();
-      setFormData({ name: "", type: "expense", isPublicBurden: false });
+      setFormData({ name: "", type: "expense", isPublicBurden: false, parentCategoryId: "" });
     } catch (error) {
       console.error("Submit error:", error);
       alert("カテゴリーの保存に失敗しました");
@@ -224,6 +237,7 @@ export default function CategoriesPage() {
                         setFormData({
                           ...formData,
                           type: e.target.value as "income" | "expense",
+                          parentCategoryId: "", // タイプ変更時に親カテゴリーをリセット
                         })
                       }
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -232,6 +246,35 @@ export default function CategoriesPage() {
                       <option value="income">収入</option>
                     </select>
                   </div>
+                </div>
+
+                {/* 親カテゴリー選択 */}
+                <div className="space-y-2">
+                  <Label htmlFor="parentCategory">親カテゴリー（任意）</Label>
+                  <select
+                    id="parentCategory"
+                    value={formData.parentCategoryId || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        parentCategoryId: e.target.value || null,
+                      })
+                    }
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">なし（親カテゴリー）</option>
+                    {categories
+                      .filter(
+                        (c) =>
+                          c.type === formData.type &&
+                          !c.parentCategoryId // 親カテゴリーのみ表示
+                      )
+                      .map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                  </select>
                 </div>
 
                 {/* 公的負担チェックボックス */}
@@ -303,6 +346,7 @@ export default function CategoriesPage() {
         }}
         category={editingCategory}
         onUpdate={fetchCategories}
+        allCategories={categories}
       />
     </div>
   );

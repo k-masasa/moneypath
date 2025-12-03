@@ -10,6 +10,7 @@ const categorySchema = z.object({
   icon: z.string().optional(),
   order: z.number().int().optional(),
   isPublicBurden: z.boolean().optional(),
+  parentCategoryId: z.string().nullable().optional(),
 });
 
 // カテゴリー一覧取得
@@ -31,6 +32,23 @@ export async function GET(request: Request) {
     const categories = await prisma.category.findMany({
       where,
       orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      include: {
+        parentCategory: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        subCategories: {
+          select: {
+            id: true,
+            name: true,
+            type: true,
+            order: true,
+          },
+          orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+        },
+      },
     });
 
     return NextResponse.json({ categories });

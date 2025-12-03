@@ -10,6 +10,7 @@ const categoryUpdateSchema = z.object({
   icon: z.string().optional(),
   order: z.number().int().optional(),
   isPublicBurden: z.boolean().optional(),
+  parentCategoryId: z.string().nullable().optional(),
 });
 
 // カテゴリー更新

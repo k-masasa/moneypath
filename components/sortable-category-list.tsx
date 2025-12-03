@@ -30,6 +30,17 @@ type Category = {
   icon?: string;
   order: number;
   isPublicBurden?: boolean;
+  parentCategoryId?: string | null;
+  parentCategory?: {
+    id: string;
+    name: string;
+  } | null;
+  subCategories?: {
+    id: string;
+    name: string;
+    type: "income" | "expense";
+    order: number;
+  }[];
 };
 
 type SortableCategoryListProps = {
@@ -43,10 +54,12 @@ function SortableItem({
   category,
   onEdit,
   onDelete,
+  isChild = false,
 }: {
   category: Category;
   onEdit: (category: Category) => void;
   onDelete: (id: string) => void;
+  isChild?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: category.id });
@@ -58,10 +71,13 @@ function SortableItem({
   };
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={setNodeRef} style={style} className={isChild ? "ml-6" : ""}>
       <Card>
         <CardContent className="flex items-center justify-between py-2 px-3">
           <div className="flex items-center gap-2">
+            {isChild && (
+              <span className="text-muted-foreground text-xs">└─</span>
+            )}
             <button
               className="cursor-grab active:cursor-grabbing touch-none"
               {...attributes}
@@ -148,6 +164,21 @@ export function SortableCategoryList({
     );
   }
 
+  // 親カテゴリーとその子カテゴリーを階層的に並べる
+  const hierarchicalItems: Array<{ category: Category; isChild: boolean }> = [];
+  const parentCategories = items.filter((cat) => !cat.parentCategoryId);
+
+  parentCategories.forEach((parent) => {
+    // 親カテゴリーを追加
+    hierarchicalItems.push({ category: parent, isChild: false });
+
+    // その子カテゴリーを追加
+    const children = items.filter((cat) => cat.parentCategoryId === parent.id);
+    children.forEach((child) => {
+      hierarchicalItems.push({ category: child, isChild: true });
+    });
+  });
+
   return (
     <DndContext
       sensors={sensors}
@@ -159,12 +190,13 @@ export function SortableCategoryList({
         strategy={verticalListSortingStrategy}
       >
         <div className="space-y-2">
-          {items.map((category) => (
+          {hierarchicalItems.map(({ category, isChild }) => (
             <SortableItem
               key={category.id}
               category={category}
               onEdit={onEdit}
               onDelete={onDelete}
+              isChild={isChild}
             />
           ))}
         </div>
