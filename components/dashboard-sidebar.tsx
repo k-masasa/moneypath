@@ -34,6 +34,9 @@ export function DashboardSidebar() {
   const router = useRouter();
 
   const handleLogout = async () => {
+    if (!confirm("ログアウトしますか？")) {
+      return;
+    }
     await signOut({ redirect: false });
     router.push("/");
   };
