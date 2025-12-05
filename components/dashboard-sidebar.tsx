@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FileText, Tag, Target, Home, Settings, LogOut, Calendar, Receipt } from "lucide-react";
+import { FileText, Tag, Home, LogOut, Calendar } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
@@ -27,17 +27,6 @@ const menuItems = [
     label: "カテゴリー管理",
     icon: Tag,
   },
-  {
-    href: "/goals",
-    label: "目標設定",
-    icon: Target,
-    disabled: true,
-  },
-  {
-    href: "/settings",
-    label: "設定",
-    icon: Settings,
-  },
 ];
 
 export function DashboardSidebar() {
@@ -45,6 +34,9 @@ export function DashboardSidebar() {
   const router = useRouter();
 
   const handleLogout = async () => {
+    if (!confirm("ログアウトしますか？")) {
+      return;
+    }
     await signOut({ redirect: false });
     router.push("/");
   };
@@ -59,15 +51,10 @@ export function DashboardSidebar() {
           return (
             <Link
               key={item.href}
-              href={item.disabled ? "#" : item.href}
+              href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                item.disabled
-                  ? "opacity-50 cursor-not-allowed"
-                  : isActive
-                  ? ""
-                  : "hover:bg-gray-100"
+                isActive ? "" : "hover:bg-gray-100"
               }`}
-              onClick={(e) => item.disabled && e.preventDefault()}
             >
               <Icon className="h-5 w-5" />
               <span className={`font-medium ${isActive ? "underline" : ""}`}>{item.label}</span>

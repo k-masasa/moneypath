@@ -40,15 +40,6 @@ type MonthlyTrend = {
   savingsRate: number;
 };
 
-type BalanceData = {
-  hasBalance: boolean;
-  initialBalance?: number;
-  balanceStartDate?: string;
-  totalIncome?: number;
-  totalExpense?: number;
-  currentBalance?: number;
-};
-
 export function DashboardClient({ userEmail }: DashboardClientProps) {
   const { startLoading, stopLoading } = useLoading();
   const [stats, setStats] = useState<MonthlyStats>({
@@ -60,7 +51,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [balanceData, setBalanceData] = useState<BalanceData>({ hasBalance: false });
   const [isTrendLoading, setIsTrendLoading] = useState(false);
 
   // 現在の年月を初期値に
@@ -79,22 +69,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   useEffect(() => {
     fetchMonthlyTrends();
   }, [trendStartYear, trendStartMonth]);
-
-  useEffect(() => {
-    fetchBalance();
-  }, []);
-
-  const fetchBalance = async () => {
-    try {
-      const response = await fetch("/api/user/balance");
-      if (response.ok) {
-        const data = await response.json();
-        setBalanceData(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch balance:", error);
-    }
-  };
 
   const fetchMonthlyStats = async () => {
     if (!isInitialLoad) {
@@ -343,41 +317,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       <DashboardSidebar />
 
       <div className="pt-32 pl-64 container mx-auto px-4 py-8">
-        {/* 現在の資産 */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="text-2xl">
-              {(() => {
-                const today = new Date();
-                const year = today.getFullYear();
-                const month = String(today.getMonth() + 1).padStart(2, '0');
-                const day = String(today.getDate()).padStart(2, '0');
-                return `${year}/${month}/${day} 時点の資産`;
-              })()}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {balanceData.hasBalance ? (
-              <div className="space-y-3">
-                <div className={`text-5xl font-bold ${(balanceData.currentBalance || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {(balanceData.currentBalance || 0) < 0 && '-'}
-                  {formatCurrency(Math.abs(balanceData.currentBalance || 0))}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {balanceData.balanceStartDate && `${new Date(balanceData.balanceStartDate).toLocaleDateString('ja-JP')} に記録開始`}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-4">
-                <p className="text-muted-foreground mb-4">初期残高が設定されていません</p>
-                <Link href="/settings">
-                  <Button>初期残高を設定する</Button>
-                </Link>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
         {/* 12ヶ月トレンドグラフ（貯蓄率含む） */}
         {monthlyTrends.length > 0 && (
           <Card className="mb-8">
