@@ -13,10 +13,10 @@ export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
   const { openTransactionDialog } = useTransactionDialog();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b" style={{ backgroundColor: '#f6f8fa' }}>
+    <header className="fixed top-0 left-0 right-0 z-50 border-b bg-card">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
-          <Link href="/dashboard" className="text-2xl font-bold">
+          <Link href="/dashboard" className="text-2xl font-bold text-foreground">
             MoneyPath
           </Link>
           <Button
