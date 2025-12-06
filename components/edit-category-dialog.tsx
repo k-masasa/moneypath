@@ -198,7 +198,7 @@ export function EditCategoryDialog({
                       isPublicBurden: e.target.checked,
                     })
                   }
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-input"
                 />
                 <Label htmlFor="edit-category-isPublicBurden" className="cursor-pointer">
                   公的負担（税金・保険料など）

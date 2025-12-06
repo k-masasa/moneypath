@@ -228,11 +228,11 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     const y2 = cy + radius * Math.sin(-midAngle * RADIAN);
 
     return (
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#000" strokeWidth={1} />
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="hsl(var(--foreground))" strokeWidth={1} />
     );
   };
 
-  // 円グラフのカスタムラベル（テキストを黒に固定）
+  // 円グラフのカスタムラベル
   const renderCustomLabel = (entry: any) => {
     const { cx, cy, midAngle, outerRadius } = entry;
     const { categoryName, totalAmount } = entry.payload;
@@ -243,7 +243,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     const percentage = ((totalAmount / stats.totalExpense) * 100).toFixed(0);
     return (
-      <text x={x} y={y} fill="#000" fontSize={14} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+      <text x={x} y={y} fill="hsl(var(--foreground))" fontSize={14} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
         {`${categoryName} (${percentage}%)`}
       </text>
     );
@@ -401,9 +401,10 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                     <Tooltip
                       formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{
-                        backgroundColor: '#fff',
-                        border: '1px solid #e0e0e0',
+                        backgroundColor: 'hsl(var(--card))',
+                        border: '1px solid hsl(var(--border))',
                         borderRadius: '4px',
+                        color: 'hsl(var(--card-foreground))',
                       }}
                     />
                     <Legend />

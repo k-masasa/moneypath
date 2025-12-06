@@ -53,7 +53,7 @@ export function DashboardSidebar() {
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                isActive ? "" : "hover:bg-gray-100"
+                isActive ? "" : "hover:bg-accent"
               }`}
             >
               <Icon className="h-5 w-5" />
@@ -66,7 +66,7 @@ export function DashboardSidebar() {
         <Button
           variant="ghost"
           onClick={handleLogout}
-          className="w-full justify-start cursor-pointer text-destructive hover:text-destructive hover:bg-red-50"
+          className="w-full justify-start cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
         >
           <LogOut className="h-5 w-5 mr-3" />
           <span className="font-medium">ログアウト</span>
