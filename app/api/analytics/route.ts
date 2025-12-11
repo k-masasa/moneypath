@@ -104,6 +104,32 @@ export async function GET(request: Request) {
       (a, b) => a.date.localeCompare(b.date)
     );
 
+    // 日毎のカテゴリー別集計（支出のみ）
+    const dailyCategoryStats: Record<string, Record<string, number>> = {};
+
+    transactions.forEach((transaction) => {
+      if (transaction.category.type === "expense") {
+        const date = transaction.date.toISOString().split("T")[0];
+        const categoryName = transaction.category.name;
+
+        if (!dailyCategoryStats[date]) {
+          dailyCategoryStats[date] = {};
+        }
+
+        if (!dailyCategoryStats[date][categoryName]) {
+          dailyCategoryStats[date][categoryName] = 0;
+        }
+
+        dailyCategoryStats[date][categoryName] += Number(transaction.amount);
+      }
+    });
+
+    // 配列形式に変換
+    const dailyCategoryStatsArray = Object.entries(dailyCategoryStats).map(([date, categories]) => ({
+      date,
+      categories,
+    })).sort((a, b) => a.date.localeCompare(b.date));
+
     return NextResponse.json({
       period: {
         startDate,
@@ -117,6 +143,7 @@ export async function GET(request: Request) {
       },
       categoryStats: categoryStatsArray,
       dailyStats: dailyStatsArray,
+      dailyCategoryStats: dailyCategoryStatsArray,
     });
   } catch (error) {
     console.error("Get analytics error:", error);

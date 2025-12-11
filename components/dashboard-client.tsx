@@ -40,6 +40,12 @@ type MonthlyTrend = {
   savingsRate: number;
 };
 
+type DailyStat = {
+  date: string;
+  income: number;
+  expense: number;
+};
+
 export function DashboardClient({ userEmail }: DashboardClientProps) {
   const { startLoading, stopLoading } = useLoading();
   const [stats, setStats] = useState<MonthlyStats>({
@@ -52,6 +58,8 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
+  const [statsLoaded, setStatsLoaded] = useState(false);
+  const [trendsLoaded, setTrendsLoaded] = useState(false);
 
   // 現在の年月を初期値に
   const now = new Date();
@@ -69,6 +77,13 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   useEffect(() => {
     fetchMonthlyTrends();
   }, [trendStartYear, trendStartMonth]);
+
+  // 両方のデータが読み込まれたら初期ロードを終了
+  useEffect(() => {
+    if (statsLoaded && trendsLoaded) {
+      setIsInitialLoad(false);
+    }
+  }, [statsLoaded, trendsLoaded]);
 
   const fetchMonthlyStats = async () => {
     if (!isInitialLoad) {
@@ -95,7 +110,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       console.error("Failed to fetch monthly stats:", error);
     } finally {
       if (isInitialLoad) {
-        setIsInitialLoad(false);
+        setStatsLoaded(true);
       } else {
         stopLoading();
       }
@@ -158,6 +173,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       console.error("Failed to fetch monthly trends:", error);
     } finally {
       setIsTrendLoading(false);
+      if (isInitialLoad) {
+        setTrendsLoaded(true);
+      }
     }
   };
 
@@ -432,11 +450,11 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
           </Card>
         )}
 
-        {/* 支出の内訳 */}
+        {/* 支出詳細（日毎の支出 + 支出の内訳） */}
         <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>支出内訳 ({selectedYear}/{selectedMonth})</CardTitle>
+              <CardTitle className="text-2xl">支出詳細 ({selectedYear}/{selectedMonth})</CardTitle>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -466,34 +484,37 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-6">
+          <CardContent className="space-y-8">
             {expenseCategories.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <p>この月の支出データがありません</p>
                 <p className="text-sm mt-2">家計簿入力ページから支出を記録してください</p>
               </div>
             ) : (
-              <div className="w-full h-[800px] flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartExpenseCategories}
-                      dataKey="totalAmount"
-                      nameKey="categoryName"
-                      cx="50%"
-                      cy="50%"
-                      startAngle={90}
-                      endAngle={-270}
-                      label={renderCustomLabel}
-                      labelLine={renderCustomLabelLine}
-                    >
-                      {chartExpenseCategories.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={getColor(index)} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  </PieChart>
-                </ResponsiveContainer>
+              <div>
+                  <h3 className="text-lg font-semibold mb-4">カテゴリー別内訳</h3>
+                  <div className="w-full h-[800px] flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={chartExpenseCategories}
+                          dataKey="totalAmount"
+                          nameKey="categoryName"
+                          cx="50%"
+                          cy="50%"
+                          startAngle={90}
+                          endAngle={-270}
+                          label={renderCustomLabel}
+                          labelLine={renderCustomLabelLine}
+                        >
+                          {chartExpenseCategories.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={getColor(index)} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
               </div>
             )}
           </CardContent>
