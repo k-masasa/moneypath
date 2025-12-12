@@ -29,3 +29,6 @@ prisma/migrations/
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Documentation (manual formatting)
+docs/
