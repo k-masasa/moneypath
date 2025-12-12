@@ -38,8 +38,8 @@ export function AddTransactionDialog({
     date: (() => {
       const today = new Date();
       const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     })(),
   });
@@ -107,11 +107,11 @@ export function AddTransactionDialog({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#22c55e', '#10b981', '#059669'],
+        colors: ["#22c55e", "#10b981", "#059669"],
       });
 
       // カスタムイベントを発火（transactionsページでリスニング）
-      window.dispatchEvent(new CustomEvent('transactionAdded'));
+      window.dispatchEvent(new CustomEvent("transactionAdded"));
 
       // 金額欄に再フォーカス
       setTimeout(() => {
@@ -211,9 +211,7 @@ export function AddTransactionDialog({
                   min="0"
                   step="1"
                   value={formData.amount}
-                  onChange={(e) =>
-                    setFormData({ ...formData, amount: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                   placeholder="金額"
                 />
               </div>
@@ -224,9 +222,7 @@ export function AddTransactionDialog({
                   type="date"
                   required
                   value={formData.date}
-                  onChange={(e) =>
-                    setFormData({ ...formData, date: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 />
               </div>
 
@@ -235,18 +231,13 @@ export function AddTransactionDialog({
                   id="description"
                   type="text"
                   value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="メモ（任意）"
                 />
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-            >
+            <Button type="submit" className="w-full">
               記録する
             </Button>
           </form>

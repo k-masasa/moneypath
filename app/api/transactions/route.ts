@@ -41,10 +41,7 @@ export async function GET(request: Request) {
 
       if (selectedCategory && selectedCategory.subCategories.length > 0) {
         // 親カテゴリーの場合: 親と子の両方を検索対象にする
-        const categoryIds = [
-          categoryId,
-          ...selectedCategory.subCategories.map((sub) => sub.id),
-        ];
+        const categoryIds = [categoryId, ...selectedCategory.subCategories.map((sub) => sub.id)];
         where.categoryId = { in: categoryIds };
       } else {
         // 子カテゴリーまたは子を持たないカテゴリーの場合: そのカテゴリーのみ
@@ -98,10 +95,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ transactions, totalCount });
   } catch (error) {
     console.error("Get transactions error:", error);
-    return NextResponse.json(
-      { error: "トランザクションの取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "トランザクションの取得に失敗しました" }, { status: 500 });
   }
 }
 
@@ -122,10 +116,7 @@ export async function POST(request: Request) {
     });
 
     if (!category) {
-      return NextResponse.json(
-        { error: "カテゴリーが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
     }
 
     if (category.userId !== session.user.id) {
@@ -164,9 +155,6 @@ export async function POST(request: Request) {
     }
 
     console.error("Create transaction error:", error);
-    return NextResponse.json(
-      { error: "トランザクションの作成に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "トランザクションの作成に失敗しました" }, { status: 500 });
   }
 }

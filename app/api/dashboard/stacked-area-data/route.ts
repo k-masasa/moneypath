@@ -88,9 +88,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Stacked area data API error:", error);
-    return NextResponse.json(
-      { error: "データの取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "データの取得に失敗しました" }, { status: 500 });
   }
 }

@@ -2,10 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
 
@@ -17,10 +14,7 @@ export async function PUT(
     const { actualAmount } = body;
 
     if (!actualAmount || actualAmount <= 0) {
-      return NextResponse.json(
-        { error: "有効な金額を入力してください" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "有効な金額を入力してください" }, { status: 400 });
     }
 
     // paramsを待機
@@ -38,17 +32,11 @@ export async function PUT(
     });
 
     if (!scheduledPayment) {
-      return NextResponse.json(
-        { error: "支払い予定が見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "支払い予定が見つかりません" }, { status: 404 });
     }
 
     if (scheduledPayment.status === "completed") {
-      return NextResponse.json(
-        { error: "既に支払い済みです" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "既に支払い済みです" }, { status: 400 });
     }
 
     // トランザクションを使用して、支払い記録とトランザクションを同時に作成
@@ -86,9 +74,6 @@ export async function PUT(
     return NextResponse.json(result);
   } catch (error) {
     console.error("Scheduled payment complete error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

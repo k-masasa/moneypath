@@ -139,9 +139,7 @@ export function EditScheduledPaymentDialog({
               </label>
               <select
                 value={formData.categoryId}
-                onChange={(e) =>
-                  setFormData({ ...formData, categoryId: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 className="w-full border rounded px-3 py-2"
                 required
               >
@@ -164,9 +162,7 @@ export function EditScheduledPaymentDialog({
                 type="number"
                 placeholder="10000"
                 value={formData.estimatedAmount}
-                onChange={(e) =>
-                  setFormData({ ...formData, estimatedAmount: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, estimatedAmount: e.target.value })}
                 required
                 min="0"
                 step="1"
@@ -182,9 +178,7 @@ export function EditScheduledPaymentDialog({
                 id="edit-dueDate"
                 type="date"
                 value={formData.dueDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, dueDate: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                 required
               />
             </div>
@@ -199,9 +193,7 @@ export function EditScheduledPaymentDialog({
                 type="text"
                 placeholder="メモ（任意）"
                 value={formData.memo}
-                onChange={(e) =>
-                  setFormData({ ...formData, memo: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
               />
             </div>
 

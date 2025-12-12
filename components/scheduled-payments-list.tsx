@@ -55,9 +55,7 @@ export function ScheduledPaymentsList({
     return dueDate < today;
   };
 
-  const pendingPayments = scheduledPayments.filter(
-    (p) => p.status === "pending"
-  );
+  const pendingPayments = scheduledPayments.filter((p) => p.status === "pending");
 
   if (pendingPayments.length === 0) {
     return (
@@ -65,19 +63,14 @@ export function ScheduledPaymentsList({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>支払い予定</CardTitle>
-            <Button
-              size="sm"
-              onClick={onAddClick}
-            >
+            <Button size="sm" onClick={onAddClick}>
               <Plus className="h-4 w-4 mr-1" />
               追加
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            現在、支払い予定はありません
-          </p>
+          <p className="text-muted-foreground">現在、支払い予定はありません</p>
         </CardContent>
       </Card>
     );
@@ -89,14 +82,9 @@ export function ScheduledPaymentsList({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CardTitle>支払い予定</CardTitle>
-            <span className="text-sm text-muted-foreground">
-              ({pendingPayments.length}件)
-            </span>
+            <span className="text-sm text-muted-foreground">({pendingPayments.length}件)</span>
           </div>
-          <Button
-            size="sm"
-            onClick={onAddClick}
-          >
+          <Button size="sm" onClick={onAddClick}>
             <Plus className="h-4 w-4 mr-1" />
             追加
           </Button>
@@ -117,9 +105,7 @@ export function ScheduledPaymentsList({
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-base">
-                        {payment.name}
-                      </h3>
+                      <h3 className="font-semibold text-base">{payment.name}</h3>
                       {overdue && (
                         <span className="text-xs bg-red-500 text-white px-2 py-1 rounded">
                           期限超過
@@ -149,10 +135,7 @@ export function ScheduledPaymentsList({
                   </div>
 
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => onPaymentClick(payment)}
-                    >
+                    <Button size="sm" onClick={() => onPaymentClick(payment)}>
                       支払う
                     </Button>
                     <Button

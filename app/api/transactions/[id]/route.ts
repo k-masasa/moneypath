@@ -11,10 +11,7 @@ const transactionUpdateSchema = z.object({
 });
 
 // トランザクション更新
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -31,10 +28,7 @@ export async function PUT(
     });
 
     if (!existingTransaction) {
-      return NextResponse.json(
-        { error: "トランザクションが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "トランザクションが見つかりません" }, { status: 404 });
     }
 
     if (existingTransaction.userId !== session.user.id) {
@@ -51,10 +45,7 @@ export async function PUT(
       });
 
       if (!category || category.userId !== session.user.id) {
-        return NextResponse.json(
-          { error: "無効なカテゴリーIDです" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "無効なカテゴリーIDです" }, { status: 400 });
       }
     }
 
@@ -89,18 +80,12 @@ export async function PUT(
     }
 
     console.error("Update transaction error:", error);
-    return NextResponse.json(
-      { error: "トランザクションの更新に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "トランザクションの更新に失敗しました" }, { status: 500 });
   }
 }
 
 // トランザクション削除
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -115,10 +100,7 @@ export async function DELETE(
     });
 
     if (!existingTransaction) {
-      return NextResponse.json(
-        { error: "トランザクションが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "トランザクションが見つかりません" }, { status: 404 });
     }
 
     if (existingTransaction.userId !== session.user.id) {
@@ -135,9 +117,6 @@ export async function DELETE(
     return NextResponse.json({ message: "トランザクションを削除しました" });
   } catch (error) {
     console.error("Delete transaction error:", error);
-    return NextResponse.json(
-      { error: "トランザクションの削除に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "トランザクションの削除に失敗しました" }, { status: 500 });
   }
 }

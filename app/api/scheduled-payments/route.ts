@@ -39,10 +39,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ scheduledPayments });
   } catch (error) {
     console.error("Scheduled payments GET error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -60,10 +57,7 @@ export async function POST(request: Request) {
 
     // バリデーション
     if (!categoryId || !estimatedAmount || !dueDate) {
-      return NextResponse.json(
-        { error: "必須項目が不足しています" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "必須項目が不足しています" }, { status: 400 });
     }
 
     // カテゴリーの存在確認とユーザー所有確認
@@ -76,10 +70,7 @@ export async function POST(request: Request) {
     });
 
     if (!category) {
-      return NextResponse.json(
-        { error: "カテゴリーが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
     }
 
     // カテゴリに公的負担フラグがあるか確認
@@ -104,9 +95,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ scheduledPayment }, { status: 201 });
   } catch (error) {
     console.error("Scheduled payment POST error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

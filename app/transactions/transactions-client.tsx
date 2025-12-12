@@ -71,10 +71,10 @@ export function TransactionsClient() {
       fetchData();
     };
 
-    window.addEventListener('transactionAdded', handleTransactionAdded);
+    window.addEventListener("transactionAdded", handleTransactionAdded);
 
     return () => {
-      window.removeEventListener('transactionAdded', handleTransactionAdded);
+      window.removeEventListener("transactionAdded", handleTransactionAdded);
     };
   }, [searchParams]); // URLパラメータが変わったら再取得
 
@@ -129,7 +129,6 @@ export function TransactionsClient() {
       }
     }
   };
-
 
   const handleDelete = async (id: string) => {
     if (!confirm("この記録を削除しますか？")) return;
@@ -213,7 +212,6 @@ export function TransactionsClient() {
     }
   };
 
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("ja-JP", {
       style: "currency",
@@ -263,9 +261,7 @@ export function TransactionsClient() {
             </CardHeader>
             <CardContent>
               <Link href="/categories">
-                <Button>
-                  カテゴリー管理へ
-                </Button>
+                <Button>カテゴリー管理へ</Button>
               </Link>
             </CardContent>
           </Card>
@@ -277,15 +273,9 @@ export function TransactionsClient() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CardTitle>収支履歴</CardTitle>
-                    <span className="text-sm text-muted-foreground">
-                      ({totalCount}件)
-                    </span>
+                    <span className="text-sm text-muted-foreground">({totalCount}件)</span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setShowSearch(true)}
-                  >
+                  <Button size="sm" variant="outline" onClick={() => setShowSearch(true)}>
                     <Search className="h-4 w-4" />
                   </Button>
                 </div>
@@ -301,14 +291,22 @@ export function TransactionsClient() {
                           <th className="text-left py-3 px-4 font-medium text-sm">日付</th>
                           <th className="text-left py-3 px-4 font-medium text-sm">科目</th>
                           <th className="text-right py-3 px-4 font-medium text-sm">金額</th>
-                          <th className="text-left py-3 px-4 font-medium text-sm" style={{ maxWidth: '100px' }}>メモ</th>
+                          <th
+                            className="text-left py-3 px-4 font-medium text-sm"
+                            style={{ maxWidth: "100px" }}
+                          >
+                            メモ
+                          </th>
                           <th className="text-left py-3 px-4 font-medium text-sm">登録日時</th>
                           <th className="text-center py-3 px-4 font-medium text-sm w-20"></th>
                         </tr>
                       </thead>
                       <tbody>
                         {transactions.map((transaction) => (
-                          <tr key={transaction.id} className="border-b hover:bg-muted/50 transition-colors">
+                          <tr
+                            key={transaction.id}
+                            className="border-b hover:bg-muted/50 transition-colors"
+                          >
                             <td className="py-3 px-4 text-sm text-muted-foreground">
                               {formatDate(transaction.date)}
                             </td>
@@ -327,9 +325,12 @@ export function TransactionsClient() {
                                 {formatCurrency(transaction.amount)}
                               </span>
                             </td>
-                            <td className="py-3 px-4 text-sm text-muted-foreground" style={{ maxWidth: '100px' }}>
+                            <td
+                              className="py-3 px-4 text-sm text-muted-foreground"
+                              style={{ maxWidth: "100px" }}
+                            >
                               <div className="overflow-hidden text-ellipsis whitespace-nowrap">
-                                {transaction.description || '-'}
+                                {transaction.description || "-"}
                               </div>
                             </td>
                             <td className="py-3 px-4 text-sm text-muted-foreground">
@@ -407,14 +408,16 @@ export function TransactionsClient() {
                 )}
               </CardContent>
             </Card>
-
           </>
         )}
       </div>
 
       {/* 検索ダイアログ */}
       {showSearch && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowSearch(false)}>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowSearch(false)}
+        >
           <Card className="w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -422,11 +425,7 @@ export function TransactionsClient() {
                   <Search className="h-5 w-5" />
                   検索条件
                 </CardTitle>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowSearch(false)}
-                >
+                <Button size="sm" variant="ghost" onClick={() => setShowSearch(false)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -485,20 +484,12 @@ export function TransactionsClient() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">開始日</label>
-                    <Input
-                      name="startDate"
-                      type="date"
-                      defaultValue={searchFilters.startDate}
-                    />
+                    <Input name="startDate" type="date" defaultValue={searchFilters.startDate} />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium">終了日</label>
-                    <Input
-                      name="endDate"
-                      type="date"
-                      defaultValue={searchFilters.endDate}
-                    />
+                    <Input name="endDate" type="date" defaultValue={searchFilters.endDate} />
                   </div>
 
                   <div className="flex gap-2">
@@ -534,16 +525,15 @@ export function TransactionsClient() {
 
       {/* 編集ダイアログ */}
       {editingTransaction && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setEditingTransaction(null)}>
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setEditingTransaction(null)}
+        >
           <Card className="w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>記録の編集</CardTitle>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setEditingTransaction(null)}
-                >
+                <Button size="sm" variant="ghost" onClick={() => setEditingTransaction(null)}>
                   <X className="h-4 w-4" />
                 </Button>
               </div>
@@ -577,9 +567,7 @@ export function TransactionsClient() {
                     min="0"
                     step="1"
                     value={editFormData.amount}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, amount: e.target.value })
-                    }
+                    onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
                   />
                 </div>
 
@@ -589,9 +577,7 @@ export function TransactionsClient() {
                     type="date"
                     required
                     value={editFormData.date}
-                    onChange={(e) =>
-                      setEditFormData({ ...editFormData, date: e.target.value })
-                    }
+                    onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
                   />
                 </div>
 
@@ -624,7 +610,6 @@ export function TransactionsClient() {
           </Card>
         </div>
       )}
-
     </div>
   );
 }

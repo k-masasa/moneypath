@@ -14,10 +14,7 @@ export async function GET(request: Request) {
     const endDate = searchParams.get("endDate");
 
     if (!startDate || !endDate) {
-      return NextResponse.json(
-        { error: "startDateとendDateを指定してください" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "startDateとendDateを指定してください" }, { status: 400 });
     }
 
     const where: any = {
@@ -38,14 +35,17 @@ export async function GET(request: Request) {
     });
 
     // カテゴリー別に集計
-    const categoryStats: Record<string, {
-      categoryId: string;
-      categoryName: string;
-      categoryType: string;
-      categoryIcon?: string;
-      totalAmount: number;
-      count: number;
-    }> = {};
+    const categoryStats: Record<
+      string,
+      {
+        categoryId: string;
+        categoryName: string;
+        categoryType: string;
+        categoryIcon?: string;
+        totalAmount: number;
+        count: number;
+      }
+    > = {};
 
     transactions.forEach((transaction) => {
       const categoryId = transaction.category.id;
@@ -100,9 +100,7 @@ export async function GET(request: Request) {
       }
     });
 
-    const dailyStatsArray = Object.values(dailyStats).sort(
-      (a, b) => a.date.localeCompare(b.date)
-    );
+    const dailyStatsArray = Object.values(dailyStats).sort((a, b) => a.date.localeCompare(b.date));
 
     // 日毎のカテゴリー別集計（支出のみ）
     const dailyCategoryStats: Record<string, Record<string, number>> = {};
@@ -125,10 +123,12 @@ export async function GET(request: Request) {
     });
 
     // 配列形式に変換
-    const dailyCategoryStatsArray = Object.entries(dailyCategoryStats).map(([date, categories]) => ({
-      date,
-      categories,
-    })).sort((a, b) => a.date.localeCompare(b.date));
+    const dailyCategoryStatsArray = Object.entries(dailyCategoryStats)
+      .map(([date, categories]) => ({
+        date,
+        categories,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     return NextResponse.json({
       period: {
@@ -147,9 +147,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Get analytics error:", error);
-    return NextResponse.json(
-      { error: "統計情報の取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "統計情報の取得に失敗しました" }, { status: 500 });
   }
 }

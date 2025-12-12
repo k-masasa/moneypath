@@ -26,9 +26,7 @@ export function CompletePaymentDialog({
   scheduledPayment,
   onComplete,
 }: CompletePaymentDialogProps) {
-  const [actualAmount, setActualAmount] = useState(
-    scheduledPayment.estimatedAmount.toString()
-  );
+  const [actualAmount, setActualAmount] = useState(scheduledPayment.estimatedAmount.toString());
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!open) return null;
@@ -57,10 +55,7 @@ export function CompletePaymentDialog({
       className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
       onClick={onClose}
     >
-      <Card
-        className="w-full max-w-md mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <Card className="w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>支払いを完了</CardTitle>
@@ -73,17 +68,13 @@ export function CompletePaymentDialog({
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">カテゴリ</label>
-              <div className="text-base font-semibold">
-                {scheduledPayment.category.name}
-              </div>
+              <div className="text-base font-semibold">{scheduledPayment.category.name}</div>
             </div>
 
             {scheduledPayment.memo && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">メモ</label>
-                <div className="text-sm text-muted-foreground">
-                  {scheduledPayment.memo}
-                </div>
+                <div className="text-sm text-muted-foreground">{scheduledPayment.memo}</div>
               </div>
             )}
 
@@ -122,11 +113,7 @@ export function CompletePaymentDialog({
               >
                 キャンセル
               </Button>
-              <Button
-                type="submit"
-                className="flex-1"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="flex-1" disabled={isSubmitting}>
                 {isSubmitting ? "処理中..." : "支払いを記録"}
               </Button>
             </div>

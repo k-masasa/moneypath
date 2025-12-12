@@ -40,7 +40,9 @@ export default function Home() {
               <Button size="lg">今すぐ始める</Button>
             </Link>
             <Link href="#features">
-              <Button size="lg" variant="outline">詳しく見る</Button>
+              <Button size="lg" variant="outline">
+                詳しく見る
+              </Button>
             </Link>
           </div>
         </div>
@@ -130,9 +132,7 @@ export default function Home() {
       <section className="container mx-auto px-4 py-20">
         <Card className="max-w-4xl mx-auto bg-primary text-primary-foreground">
           <CardHeader className="text-center">
-            <CardTitle className="text-3xl mb-4">
-              今日からあなたのお金の道筋を描こう
-            </CardTitle>
+            <CardTitle className="text-3xl mb-4">今日からあなたのお金の道筋を描こう</CardTitle>
             <CardDescription className="text-primary-foreground/80 text-xl">
               無料で始められます。クレジットカード不要。
             </CardDescription>

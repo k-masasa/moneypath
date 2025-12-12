@@ -3,10 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 // 支払い予定削除
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
 
@@ -26,18 +23,12 @@ export async function DELETE(
     });
 
     if (!scheduledPayment) {
-      return NextResponse.json(
-        { error: "支払い予定が見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "支払い予定が見つかりません" }, { status: 404 });
     }
 
     // 完了済みの支払い予定は削除できない（紐付いたトランザクションがあるため）
     if (scheduledPayment.status === "completed") {
-      return NextResponse.json(
-        { error: "完了済みの支払い予定は削除できません" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "完了済みの支払い予定は削除できません" }, { status: 400 });
     }
 
     // 支払い予定を削除
@@ -50,18 +41,12 @@ export async function DELETE(
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Scheduled payment DELETE error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 // 支払い予定更新
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
 
@@ -75,10 +60,7 @@ export async function PUT(
 
     // バリデーション
     if (!categoryId || !estimatedAmount || !dueDate) {
-      return NextResponse.json(
-        { error: "必須項目が不足しています" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "必須項目が不足しています" }, { status: 400 });
     }
 
     // 支払い予定の存在確認とユーザー所有確認
@@ -90,18 +72,12 @@ export async function PUT(
     });
 
     if (!scheduledPayment) {
-      return NextResponse.json(
-        { error: "支払い予定が見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "支払い予定が見つかりません" }, { status: 404 });
     }
 
     // 完了済みの支払い予定は編集できない
     if (scheduledPayment.status === "completed") {
-      return NextResponse.json(
-        { error: "完了済みの支払い予定は編集できません" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "完了済みの支払い予定は編集できません" }, { status: 400 });
     }
 
     // カテゴリーの存在確認
@@ -113,10 +89,7 @@ export async function PUT(
     });
 
     if (!category) {
-      return NextResponse.json(
-        { error: "カテゴリーが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
     }
 
     // カテゴリから公的負担フラグを自動検出
@@ -142,9 +115,6 @@ export async function PUT(
     return NextResponse.json({ scheduledPayment: updatedScheduledPayment });
   } catch (error) {
     console.error("Scheduled payment PUT error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

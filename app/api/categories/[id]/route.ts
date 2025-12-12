@@ -14,10 +14,7 @@ const categoryUpdateSchema = z.object({
 });
 
 // カテゴリー更新
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -34,10 +31,7 @@ export async function PUT(
     });
 
     if (!existingCategory) {
-      return NextResponse.json(
-        { error: "カテゴリーが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
     }
 
     if (existingCategory.userId !== session.user.id) {
@@ -62,18 +56,12 @@ export async function PUT(
     }
 
     console.error("Update category error:", error);
-    return NextResponse.json(
-      { error: "カテゴリーの更新に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "カテゴリーの更新に失敗しました" }, { status: 500 });
   }
 }
 
 // カテゴリー削除
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -88,10 +76,7 @@ export async function DELETE(
     });
 
     if (!existingCategory) {
-      return NextResponse.json(
-        { error: "カテゴリーが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
     }
 
     if (existingCategory.userId !== session.user.id) {
@@ -108,9 +93,6 @@ export async function DELETE(
     return NextResponse.json({ message: "カテゴリーを削除しました" });
   } catch (error) {
     console.error("Delete category error:", error);
-    return NextResponse.json(
-      { error: "カテゴリーの削除に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "カテゴリーの削除に失敗しました" }, { status: 500 });
   }
 }

@@ -5,7 +5,9 @@ import { z } from "zod";
 
 const categorySchema = z.object({
   name: z.string().min(1, { message: "カテゴリー名を入力してください" }),
-  type: z.enum(["income", "expense"], { message: "タイプは income または expense である必要があります" }),
+  type: z.enum(["income", "expense"], {
+    message: "タイプは income または expense である必要があります",
+  }),
   color: z.string().optional(),
   icon: z.string().optional(),
   order: z.number().int().optional(),
@@ -54,10 +56,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ categories });
   } catch (error) {
     console.error("Get categories error:", error);
-    return NextResponse.json(
-      { error: "カテゴリーの取得に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "カテゴリーの取得に失敗しました" }, { status: 500 });
   }
 }
 
@@ -89,9 +88,6 @@ export async function POST(request: Request) {
     }
 
     console.error("Create category error:", error);
-    return NextResponse.json(
-      { error: "カテゴリーの作成に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "カテゴリーの作成に失敗しました" }, { status: 500 });
   }
 }

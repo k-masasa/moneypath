@@ -84,14 +84,11 @@ export default function PaymentSchedulePage() {
 
     startLoading();
     try {
-      const response = await fetch(
-        `/api/scheduled-payments/${selectedPayment.id}/complete`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ actualAmount }),
-        }
-      );
+      const response = await fetch(`/api/scheduled-payments/${selectedPayment.id}/complete`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ actualAmount }),
+      });
 
       if (!response.ok) throw new Error("Failed to complete payment");
 
@@ -174,10 +171,7 @@ export default function PaymentSchedulePage() {
   const pendingPayments = scheduledPayments.filter((p) => p.status === "pending");
 
   // 未払い合計額計算
-  const totalPending = pendingPayments.reduce(
-    (sum, p) => sum + Number(p.estimatedAmount),
-    0
-  );
+  const totalPending = pendingPayments.reduce((sum, p) => sum + Number(p.estimatedAmount), 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -218,9 +212,7 @@ export default function PaymentSchedulePage() {
                       <span className="font-bold text-orange-600">
                         {formatCurrency(totalPending)}
                       </span>
-                      <span className="text-muted-foreground">
-                        ({pendingPayments.length}件)
-                      </span>
+                      <span className="text-muted-foreground">({pendingPayments.length}件)</span>
                     </div>
                   </div>
                   <Button size="sm" onClick={() => setShowAddForm(true)}>
@@ -231,9 +223,7 @@ export default function PaymentSchedulePage() {
               </CardHeader>
               <CardContent>
                 {pendingPayments.length === 0 ? (
-                  <p className="text-muted-foreground">
-                    現在、未払いの支払い予定はありません
-                  </p>
+                  <p className="text-muted-foreground">現在、未払いの支払い予定はありません</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -266,15 +256,14 @@ export default function PaymentSchedulePage() {
                               <td className="py-3 px-2 text-right font-medium">
                                 {formatCurrency(payment.estimatedAmount)}
                               </td>
-                              <td className={`py-3 px-2 ${overdue ? "text-red-600 font-medium" : ""}`}>
+                              <td
+                                className={`py-3 px-2 ${overdue ? "text-red-600 font-medium" : ""}`}
+                              >
                                 {formatDate(payment.dueDate)}
                               </td>
                               <td className="py-3 px-2">
                                 <div className="flex gap-1 justify-end">
-                                  <Button
-                                    size="sm"
-                                    onClick={() => setSelectedPayment(payment)}
-                                  >
+                                  <Button size="sm" onClick={() => setSelectedPayment(payment)}>
                                     支払う
                                   </Button>
                                   <Button

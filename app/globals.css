@@ -31,7 +31,7 @@
   --color-accent-foreground: oklch(0.2 0 0);
 
   /* ボーダー: 薄いグレー */
-  --color-border: oklch(0.90 0 0);
+  --color-border: oklch(0.9 0 0);
 
   /* その他 */
   --color-muted-foreground: oklch(0.5 0 0);
@@ -72,7 +72,9 @@
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-feature-settings:
+      "rlig" 1,
+      "calt" 1;
   }
   button[type="submit"] {
     font-weight: 700;

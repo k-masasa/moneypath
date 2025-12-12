@@ -9,21 +9,25 @@
 実装やコード変更を完了したら、**必ず**以下のコマンドを実行して問題がないことを確認すること：
 
 ### 1. TypeScriptタイプチェック
+
 ```bash
 npm run type-check
 ```
 
 ### 2. ビルドチェック
+
 ```bash
 npm run build
 ```
 
 ### 3. Lintチェック
+
 ```bash
 npm run lint
 ```
 
 ### 注意事項
+
 - **npm系のコマンド実行時は確認不要**: `npm run *`コマンドを実行する際、ユーザーへの確認は不要。自動的に実行して問題ない。
 
 ## チェックが失敗した場合
@@ -41,11 +45,13 @@ npm run lint
 1. **ホスト側で`npm install`を実行した後**、以下のいずれかを実行すること：
 
    **方法A: コンテナ再起動（推奨）**
+
    ```bash
    docker compose -f docker-compose.dev.yml restart app
    ```
 
    **方法B: コンテナ内で直接npm install**
+
    ```bash
    docker compose -f docker-compose.dev.yml exec app npm install
    ```
