@@ -2,6 +2,11 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DashboardClient } from "@/components/dashboard-client";
 import type { Session } from "next-auth";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "ダッシュボード",
+};
 
 export default async function DashboardPage() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
