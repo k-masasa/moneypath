@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "収支管理アプリ",
+};
 
 export default function Home() {
   return (

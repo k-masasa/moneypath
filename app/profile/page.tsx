@@ -4,6 +4,11 @@ import { redirect } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "プロフィール",
+};
 
 export default async function ProfilePage() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call
