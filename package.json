@@ -68,12 +68,6 @@
     "typescript-eslint": "^8.49.0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ],
-    "*.{json,css,md}": [
-      "prettier --write"
-    ]
+    "*": "bash -c 'npm run format:check && npm run lint && npm run type-check'"
   }
 }
