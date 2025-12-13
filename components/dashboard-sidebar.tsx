@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FileText, Tag, Home, LogOut, Calendar } from "lucide-react";
+import { FileText, Tag, Home, LogOut, Calendar, User } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
@@ -26,6 +26,11 @@ const menuItems = [
     href: "/categories",
     label: "カテゴリー管理",
     icon: Tag,
+  },
+  {
+    href: "/profile",
+    label: "プロフィール",
+    icon: User,
   },
 ];
 
