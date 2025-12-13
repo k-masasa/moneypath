@@ -3,18 +3,10 @@
 import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 function SignInForm() {
   const router = useRouter();
@@ -63,11 +55,7 @@ function SignInForm() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-muted/50">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="text-2xl font-bold mb-2 inline-block">
-            MoneyPath
-          </Link>
           <CardTitle>ログイン</CardTitle>
-          <CardDescription>メールアドレスとパスワードを入力してください</CardDescription>
         </CardHeader>
         <CardContent>
           {successMessage && (
@@ -110,19 +98,11 @@ function SignInForm() {
               />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button type="submit" disabled={loading} className="w-full mt-4">
               {loading ? "ログイン中..." : "ログイン"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="justify-center">
-          <p className="text-sm text-muted-foreground">
-            アカウントをお持ちでないですか？{" "}
-            <Link href="/auth/signup" className="text-primary hover:underline">
-              新規登録
-            </Link>
-          </p>
-        </CardFooter>
       </Card>
     </div>
   );
