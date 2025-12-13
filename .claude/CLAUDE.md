@@ -80,6 +80,10 @@ npm run lint
 
 ### フォーマット
 
+ブランチ名に応じて、以下のフォーマットを使用します：
+
+#### feature/数字, bugfix/数字, hotfix/数字 などのブランチ
+
 ```
 #<issue番号> <type>: <subject>
 
@@ -88,12 +92,27 @@ npm run lint
 [optional footer]
 ```
 
+例: `feature/123` ブランチなら `#123 feat: 新機能追加`
+
+#### main, develop などのブランチ
+
+```
+<type>: <subject>
+
+[optional body]
+
+[optional footer]
+```
+
+Issue番号なしでOK。ドキュメント更新や緊急修正など気軽にコミット可能。
+
 ### 基本ルール
 
-1. **必ず Issue 番号を先頭につける**
-2. **Conventional Commits の type を使う**
-3. **subject は簡潔に（50文字以内推奨）**
-4. **日本語でOK**
+1. **ブランチ名に数字がある場合は Issue 番号を先頭につける**（`feature/123` → `#123`）
+2. **main/develop ブランチでは Issue 番号は不要**
+3. **Conventional Commits の type を使う**
+4. **subject は簡潔に（50文字以内推奨）**
+5. **日本語でOK**
 
 ### Type 一覧
 
@@ -154,21 +173,39 @@ npm run type-check    # TypeScriptタイプチェック
 
 ### 良い例
 
+**feature/9 ブランチの場合:**
+
 ```bash
 #9 feat: 支払い予定一覧機能を追加
 #9 fix: ダッシュボードの集計ロジックを修正
 #9 refactor: API型定義を統一
 #9 chore: ESLintエラーを解消
 #9 ci: GitHub ActionsにPrisma生成ステップを追加
-#9 docs: 開発環境セットアップ手順を更新
+#9 docs: 開発環境セットアップ手順を追加
+```
+
+**main ブランチの場合:**
+
+```bash
+docs: トラブルシューティングセクションを追加
+fix: 本番環境でのビルドエラーを緊急修正
+chore: 依存関係のセキュリティアップデート
 ```
 
 ### 悪い例
 
 ```bash
+# feature/9 ブランチなのにIssue番号がない
 fix: バグ修正                    # ❌ Issue番号がない
+
+# typeがない
 #9 修正                          # ❌ typeがない
+
+# 具体性がない
 #9 fix: めっちゃいろいろ直した    # ❌ 具体性がない
+
+# mainブランチなのにIssue番号がついている（つけてもいいけど不要）
+#9 docs: READMEを更新            # ⚠️ mainブランチではIssue番号不要
 ```
 
 ## トラブルシューティング
