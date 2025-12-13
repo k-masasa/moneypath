@@ -171,6 +171,59 @@ fix: バグ修正                    # ❌ Issue番号がない
 #9 fix: めっちゃいろいろ直した    # ❌ 具体性がない
 ```
 
+## トラブルシューティング
+
+### 画面が500エラーになる、モジュールが見つからないエラー
+
+**症状:**
+
+```
+Error: Cannot find module '../chunks/ssr/[turbopack]_runtime.js'
+ENOENT: no such file or directory, open '/app/.next/dev/routes-manifest.json'
+```
+
+**原因:**
+
+`.next` のビルドキャッシュが壊れている、または古いキャッシュと新しいコードが混在している。
+特にコード変更をマージした後やホスト側の `.next` が残っている場合に発生しやすい。
+
+**対処法（優先順位順）:**
+
+#### 1. まずコンテナ再起動（最速）
+
+```bash
+docker compose -f docker-compose.dev.yml restart app
+```
+
+大抵のケースはこれで解決。
+
+#### 2. それでもダメなら .next を削除してコンテナ再起動
+
+```bash
+rm -rf .next
+docker compose -f docker-compose.dev.yml restart app
+```
+
+ビルドキャッシュが完全に壊れている場合はこれで解決。
+
+#### 3. 完全リセット（確実だが時間がかかる）
+
+```bash
+docker compose -f docker-compose.dev.yml down
+rm -rf .next
+docker compose -f docker-compose.dev.yml up -d
+```
+
+上記2つで解決しない場合や、DBも含めて環境を完全にリセットしたい場合。
+
+#### 4. ログで確認
+
+```bash
+docker compose -f docker-compose.dev.yml logs app --tail=50
+```
+
+起動時のエラーやビルドの進行状況を確認できる。
+
 ## その他の注意事項
 
 - Dockerで環境を起動している場合は、コード変更後に`docker compose -f docker-compose.dev.yml restart app` でコンテナを再起動
