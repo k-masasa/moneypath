@@ -65,7 +65,9 @@ export function DashboardSidebar() {
       <div className="p-4 border-t">
         <Button
           variant="ghost"
-          onClick={handleLogout}
+          onClick={() => {
+            void handleLogout();
+          }}
           className="w-full justify-start cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
         >
           <LogOut className="h-5 w-5 mr-3" />

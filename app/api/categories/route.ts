@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import type { Session } from "next-auth";
 
 const categorySchema = z.object({
   name: z.string().min(1, { message: "カテゴリー名を入力してください" }),
@@ -18,7 +20,8 @@ const categorySchema = z.object({
 // カテゴリー一覧取得
 export async function GET(request: Request) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
@@ -26,7 +29,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get("type");
 
-    const where: any = { userId: session.user.id };
+    const where: Prisma.CategoryWhereInput = { userId: session.user.id };
     if (type && (type === "income" || type === "expense")) {
       where.type = type;
     }
@@ -63,12 +66,13 @@ export async function GET(request: Request) {
 // カテゴリー作成
 export async function POST(request: Request) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = (await request.json()) as unknown;
     const validatedData = categorySchema.parse(body);
 
     const category = await prisma.category.create({

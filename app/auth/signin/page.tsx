@@ -52,7 +52,7 @@ function SignInForm() {
 
       router.push("/dashboard");
       router.refresh();
-    } catch (err) {
+    } catch {
       setError("ログインに失敗しました");
     } finally {
       setLoading(false);
@@ -82,7 +82,12 @@ function SignInForm() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="email">メールアドレス</Label>
               <Input

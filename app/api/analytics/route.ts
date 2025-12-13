@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import type { Session } from "next-auth";
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
@@ -17,7 +20,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "startDateとendDateを指定してください" }, { status: 400 });
     }
 
-    const where: any = {
+    const where: Prisma.TransactionWhereInput = {
       userId: session.user.id,
       date: {
         gte: new Date(startDate),

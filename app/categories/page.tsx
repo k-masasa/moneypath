@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoading } from "@/components/loading-provider";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
-import { Edit, Trash2 } from "lucide-react";
 import { EditCategoryDialog } from "@/components/edit-category-dialog";
 import { SortableCategoryList } from "@/components/sortable-category-list";
 
@@ -71,14 +69,14 @@ export default function CategoriesPage() {
   });
 
   useEffect(() => {
-    fetchCategories();
+    void fetchCategories();
   }, []);
 
   const fetchCategories = async () => {
     startLoading();
     try {
       const response = await fetch("/api/categories");
-      const data = await response.json();
+      const data = (await response.json()) as { categories: Category[] };
       setCategories(data.categories || []);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -198,7 +196,12 @@ export default function CategoriesPage() {
         {/* デフォルトカテゴリー作成ボタン */}
         {categories.length === 0 && (
           <div className="mb-6">
-            <Button onClick={initializeDefaultCategories} variant="secondary">
+            <Button
+              onClick={() => {
+                void initializeDefaultCategories();
+              }}
+              variant="secondary"
+            >
               デフォルトカテゴリーを作成
             </Button>
           </div>
@@ -210,7 +213,12 @@ export default function CategoriesPage() {
             <CardTitle>新規カテゴリー</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                void handleSubmit(e);
+              }}
+              className="space-y-4"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">カテゴリー名</Label>
@@ -307,8 +315,12 @@ export default function CategoriesPage() {
               <SortableCategoryList
                 categories={incomeCategories}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
-                onReorder={handleReorder}
+                onDelete={(id) => {
+                  void handleDelete(id);
+                }}
+                onReorder={(categories) => {
+                  void handleReorder(categories);
+                }}
               />
             </div>
 
@@ -320,8 +332,12 @@ export default function CategoriesPage() {
               <SortableCategoryList
                 categories={expenseCategories}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
-                onReorder={handleReorder}
+                onDelete={(id) => {
+                  void handleDelete(id);
+                }}
+                onReorder={(categories) => {
+                  void handleReorder(categories);
+                }}
               />
             </div>
           </div>

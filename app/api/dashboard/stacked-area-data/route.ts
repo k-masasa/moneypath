@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import type { Session } from "next-auth";
 
 export async function GET() {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
@@ -44,7 +46,12 @@ export async function GET() {
     const categoryNames = expenseCategories.map((cat) => cat.name);
 
     // 月別のデータを集計
-    const monthlyData: Record<string, any> = {};
+    type MonthlyDataEntry = {
+      month: string;
+      income: number;
+      [categoryName: string]: string | number;
+    };
+    const monthlyData: Record<string, MonthlyDataEntry> = {};
 
     // 過去12ヶ月分の月を初期化
     for (let i = 11; i >= 0; i--) {

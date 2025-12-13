@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoading } from "@/components/loading-provider";
 import { useToast } from "@/components/ui/use-toast";
-import { Trash2, HelpCircle, Search, X, Edit, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trash2, Search, X, Edit, ChevronLeft, ChevronRight } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
@@ -64,11 +64,11 @@ export function TransactionsClient() {
       await fetchData();
       setIsInitialLoading(false);
     };
-    initialLoad();
+    void initialLoad();
 
     // 収支追加時のリロード処理
     const handleTransactionAdded = () => {
-      fetchData();
+      void fetchData();
     };
 
     window.addEventListener("transactionAdded", handleTransactionAdded);
@@ -115,8 +115,11 @@ export function TransactionsClient() {
         fetch(`/api/transactions?${params.toString()}`),
       ]);
 
-      const categoriesData = await categoriesRes.json();
-      const transactionsData = await transactionsRes.json();
+      const categoriesData = (await categoriesRes.json()) as { categories: Category[] };
+      const transactionsData = (await transactionsRes.json()) as {
+        transactions: Transaction[];
+        totalCount: number;
+      };
 
       setCategories(categoriesData.categories || []);
       setTransactions(transactionsData.transactions || []);
@@ -349,7 +352,9 @@ export function TransactionsClient() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => handleDelete(transaction.id)}
+                                  onClick={() => {
+                                    void handleDelete(transaction.id);
+                                  }}
                                   className="text-destructive hover:text-destructive cursor-pointer h-8 w-8 p-0"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -539,7 +544,12 @@ export function TransactionsClient() {
               </div>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleEditSubmit} className="space-y-4">
+              <form
+                onSubmit={(e) => {
+                  void handleEditSubmit(e);
+                }}
+                className="space-y-4"
+              >
                 <div className="space-y-2">
                   <label className="text-sm font-medium">科目</label>
                   <select

@@ -1,7 +1,14 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import type { Session } from "next-auth";
 
-export default auth((req) => {
+type AuthRequest = NextRequest & {
+  auth: Session | null;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+export default auth((req: AuthRequest) => {
   const isLoggedIn = !!req.auth;
   const isAuthPage = req.nextUrl.pathname.startsWith("/auth");
   const isDashboard = req.nextUrl.pathname.startsWith("/dashboard");

@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, BarChart3, TrendingDown, ChevronLeft, ChevronRight, Home } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wallet, ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
@@ -42,6 +41,30 @@ type CategoryStat = {
   count: number;
 };
 
+type AnalyticsResponse = {
+  summary: MonthlyStats;
+  categoryStats: CategoryStat[];
+};
+
+type PieChartEntry = {
+  cx: number;
+  cy: number;
+  midAngle?: number;
+  outerRadius: number;
+  payload?: {
+    categoryName: string;
+    totalAmount: number;
+  };
+};
+
+type XAxisTickProps = {
+  x: number;
+  y: number;
+  payload: {
+    value: string | number;
+  };
+};
+
 type MonthlyTrend = {
   year: number;
   month: number;
@@ -50,12 +73,6 @@ type MonthlyTrend = {
   totalExpense: number;
   balance: number;
   savingsRate: number;
-};
-
-type DailyStat = {
-  date: string;
-  income: number;
-  expense: number;
 };
 
 export function DashboardClient({ userEmail }: DashboardClientProps) {
@@ -83,11 +100,11 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const [trendStartMonth, setTrendStartMonth] = useState(now.getMonth() + 1);
 
   useEffect(() => {
-    fetchMonthlyStats();
+    void fetchMonthlyStats();
   }, [selectedYear, selectedMonth]);
 
   useEffect(() => {
-    fetchMonthlyTrends();
+    void fetchMonthlyTrends();
   }, [trendStartYear, trendStartMonth]);
 
   // 両方のデータが読み込まれたら初期ロードを終了
@@ -114,7 +131,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       );
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as AnalyticsResponse;
         setStats(data.summary);
         setCategoryStats(data.categoryStats || []);
       }
@@ -141,7 +158,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         const month = targetDate.getMonth() + 1;
 
         // その月の1日から月末までを取得
-        const startOfMonth = new Date(year, month - 1, 1);
         const endOfMonth = new Date(year, month, 0); // 次の月の0日 = 今月の最終日
 
         // ISO形式で日付のみを取得（YYYY-MM-DD）
@@ -157,7 +173,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         let balance = 0;
 
         if (response.ok) {
-          const data = await response.json();
+          const data = (await response.json()) as AnalyticsResponse;
           totalIncome = data.summary.totalIncome || 0;
           totalExpense = data.summary.totalExpense || 0;
           balance = data.summary.balance || 0;
@@ -216,11 +232,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     setSelectedMonth(now.getMonth() + 1);
   };
 
-  const isCurrentMonth = () => {
-    const now = new Date();
-    return selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1;
-  };
-
   const handlePreviousTrendPeriod = () => {
     if (trendStartMonth === 1) {
       setTrendStartMonth(12);
@@ -247,8 +258,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   };
 
   // 円グラフのカスタムラベル線
-  const renderCustomLabelLine = (entry: any) => {
+  const renderCustomLabelLine = (entry: PieChartEntry) => {
     const { cx, cy, midAngle, outerRadius } = entry;
+    if (midAngle === undefined) return <></>;
     const RADIAN = Math.PI / 180;
     // 線の始点：円の外周
     const x1 = cx + outerRadius * Math.cos(-midAngle * RADIAN);
@@ -262,9 +274,10 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   };
 
   // 円グラフのカスタムラベル
-  const renderCustomLabel = (entry: any) => {
+  const renderCustomLabel = (entry: PieChartEntry) => {
     const { cx, cy, midAngle, outerRadius } = entry;
-    const { categoryName, totalAmount } = entry.payload;
+    if (midAngle === undefined) return <></>;
+    const { categoryName, totalAmount } = entry.payload ?? { categoryName: "", totalAmount: 0 };
     const RADIAN = Math.PI / 180;
     // ラベルを円の外側からさらに150px離す
     const radius = outerRadius + 50;
@@ -285,10 +298,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     );
   };
 
-  const selectedMonthLabel = `${selectedYear}年${selectedMonth}月`;
-
   // 収入と支出のカテゴリーを分離
-  const incomeCategories = categoryStats.filter((stat) => stat.categoryType === "income");
   const expenseCategories = categoryStats.filter((stat) => stat.categoryType === "expense");
 
   // 1%未満のカテゴリーを「その他」にまとめる
@@ -398,7 +408,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                       <XAxis
                         dataKey="label"
                         stroke="#666"
-                        tick={(props) => {
+                        tick={(props: XAxisTickProps) => {
                           const { x, y, payload } = props;
                           const currentMonth = `${now.getFullYear()}/${now.getMonth() + 1}`;
                           const isCurrentMonth = payload.value === currentMonth;

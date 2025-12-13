@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import type { Session } from "next-auth";
+
+const updateScheduledPaymentSchema = z.object({
+  categoryId: z.string().uuid(),
+  estimatedAmount: z.number().positive(),
+  dueDate: z.string(),
+  memo: z.string().optional(),
+});
 
 // 支払い予定削除
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -48,20 +58,17 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 // 支払い予定更新
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const { id } = await params;
-    const body = await request.json();
-    const { categoryId, estimatedAmount, dueDate, memo } = body;
-
-    // バリデーション
-    if (!categoryId || !estimatedAmount || !dueDate) {
-      return NextResponse.json({ error: "必須項目が不足しています" }, { status: 400 });
-    }
+    const body = (await request.json()) as unknown;
+    const validated = updateScheduledPaymentSchema.parse(body);
+    const { categoryId, estimatedAmount, dueDate, memo } = validated;
 
     // 支払い予定の存在確認とユーザー所有確認
     const scheduledPayment = await prisma.scheduledPayment.findFirst({

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import type { Session } from "next-auth";
 
 const categoryUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -16,13 +17,14 @@ const categoryUpdateSchema = z.object({
 // カテゴリー更新
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as unknown;
     const validatedData = categoryUpdateSchema.parse(body);
 
     // カテゴリーの所有権確認
@@ -63,7 +65,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 // カテゴリー削除
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }

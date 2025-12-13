@@ -48,13 +48,13 @@ export default function PaymentSchedulePage() {
       await Promise.all([fetchCategories(), fetchScheduledPayments()]);
       setIsInitialLoading(false);
     };
-    initialLoad();
+    void initialLoad();
   }, []);
 
   const fetchCategories = async () => {
     try {
       const response = await fetch("/api/categories");
-      const data = await response.json();
+      const data = (await response.json()) as { categories: Category[] };
       setCategories(data.categories || []);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -68,7 +68,7 @@ export default function PaymentSchedulePage() {
     try {
       // すべての支払い予定を取得（公的負担もそれ以外も）
       const response = await fetch("/api/scheduled-payments");
-      const data = await response.json();
+      const data = (await response.json()) as { scheduledPayments: ScheduledPayment[] };
       setScheduledPayments(data.scheduledPayments || []);
     } catch (error) {
       console.error("Failed to fetch scheduled payments:", error);
@@ -101,7 +101,7 @@ export default function PaymentSchedulePage() {
       });
 
       // 紙吹雪アニメーション
-      confetti({
+      void confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
@@ -276,9 +276,9 @@ export default function PaymentSchedulePage() {
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={async () => {
+                                    onClick={() => {
                                       if (confirm("この支払い予定を削除しますか？")) {
-                                        await handleDelete(payment.id);
+                                        void handleDelete(payment.id);
                                       }
                                     }}
                                     className="text-destructive hover:text-destructive"

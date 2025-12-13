@@ -1,21 +1,25 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+import type { Session } from "next-auth";
+
+const completePaymentSchema = z.object({
+  actualAmount: z.number().positive(),
+});
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { actualAmount } = body;
-
-    if (!actualAmount || actualAmount <= 0) {
-      return NextResponse.json({ error: "有効な金額を入力してください" }, { status: 400 });
-    }
+    const body = (await request.json()) as unknown;
+    const validated = completePaymentSchema.parse(body);
+    const { actualAmount } = validated;
 
     // paramsを待機
     const { id } = await params;

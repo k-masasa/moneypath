@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { z } from "zod";
+import type { Session } from "next-auth";
 
 const transactionUpdateSchema = z.object({
   categoryId: z.string().uuid().optional(),
@@ -13,13 +15,14 @@ const transactionUpdateSchema = z.object({
 // トランザクション更新
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as unknown;
     const validatedData = transactionUpdateSchema.parse(body);
 
     // トランザクションの所有権確認
@@ -49,7 +52,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
     }
 
-    const updateData: any = { ...validatedData };
+    const updateData: Prisma.TransactionUpdateInput = { ...validatedData };
     if (validatedData.date) {
       updateData.date = new Date(validatedData.date);
     }
@@ -87,7 +90,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 // トランザクション削除
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }

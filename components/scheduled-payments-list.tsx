@@ -141,9 +141,9 @@ export function ScheduledPaymentsList({
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={async () => {
+                      onClick={() => {
                         if (confirm("この支払い予定を削除しますか？")) {
-                          await onDelete(payment.id);
+                          void onDelete(payment.id);
                         }
                       }}
                       className="text-destructive hover:text-destructive"

@@ -103,7 +103,7 @@ export function AddTransactionDialog({
       });
 
       // 紙吹雪アニメーション
-      confetti({
+      void confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
@@ -147,7 +147,12 @@ export function AddTransactionDialog({
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-6"
+          >
             {/* カテゴリーチップ */}
             <div className="space-y-3">
               {incomeCategories.length > 0 && (

@@ -143,7 +143,12 @@ export function AddScheduledPaymentDialog({
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-6"
+          >
             {/* カテゴリー選択 */}
             <div className="space-y-2">
               <label className="text-sm font-medium">カテゴリー</label>
