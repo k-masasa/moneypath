@@ -57,11 +57,7 @@ export default function SignUpPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-muted/50">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link href="/" className="text-2xl font-bold mb-2 inline-block">
-            MoneyPath
-          </Link>
           <CardTitle>新規アカウント作成</CardTitle>
-          <CardDescription>メールアドレスとパスワードを入力してください</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -109,19 +105,11 @@ export default function SignUpPage() {
               />
             </div>
 
-            <Button type="submit" disabled={loading} className="w-full">
+            <Button type="submit" disabled={loading} className="w-full mt-4">
               {loading ? "登録中..." : "アカウント作成"}
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="justify-center">
-          <p className="text-sm text-muted-foreground">
-            既にアカウントをお持ちですか？{" "}
-            <Link href="/auth/signin" className="text-primary hover:underline">
-              ログイン
-            </Link>
-          </p>
-        </CardFooter>
       </Card>
     </div>
   );
