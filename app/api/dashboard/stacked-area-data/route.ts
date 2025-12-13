@@ -80,8 +80,9 @@ export async function GET() {
         monthlyData[monthKey].income += Number(transaction.amount);
       } else if (transaction.category.type === "expense") {
         const categoryName = transaction.category.name;
-        if (monthlyData[monthKey][categoryName] !== undefined) {
-          monthlyData[monthKey][categoryName] += Number(transaction.amount);
+        const current = monthlyData[monthKey][categoryName];
+        if (typeof current === "number") {
+          monthlyData[monthKey][categoryName] = current + Number(transaction.amount);
         }
       }
     });
