@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import type { Session } from "next-auth";
 
 const categoryUpdateSchema = z.object({
   name: z.string().min(1).optional(),
@@ -14,18 +15,16 @@ const categoryUpdateSchema = z.object({
 });
 
 // カテゴリー更新
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const { id } = await params;
-    const body = await request.json();
+    const body = (await request.json()) as unknown;
     const validatedData = categoryUpdateSchema.parse(body);
 
     // カテゴリーの所有権確認
@@ -34,10 +33,7 @@ export async function PUT(
     });
 
     if (!existingCategory) {
-      return NextResponse.json(
-        { error: "カテゴリーが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
     }
 
     if (existingCategory.userId !== session.user.id) {
@@ -62,20 +58,15 @@ export async function PUT(
     }
 
     console.error("Update category error:", error);
-    return NextResponse.json(
-      { error: "カテゴリーの更新に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "カテゴリーの更新に失敗しました" }, { status: 500 });
   }
 }
 
 // カテゴリー削除
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
@@ -88,10 +79,7 @@ export async function DELETE(
     });
 
     if (!existingCategory) {
-      return NextResponse.json(
-        { error: "カテゴリーが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
     }
 
     if (existingCategory.userId !== session.user.id) {
@@ -108,9 +96,6 @@ export async function DELETE(
     return NextResponse.json({ message: "カテゴリーを削除しました" });
   } catch (error) {
     console.error("Delete category error:", error);
-    return NextResponse.json(
-      { error: "カテゴリーの削除に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "カテゴリーの削除に失敗しました" }, { status: 500 });
   }
 }

@@ -1,14 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wallet, BarChart3, TrendingDown, ChevronLeft, ChevronRight, Home } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Wallet, ChevronLeft, ChevronRight, Home } from "lucide-react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { Button } from "@/components/ui/button";
 import { useLoading } from "@/components/loading-provider";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, LineChart, Line, XAxis, YAxis, CartesianGrid } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  Tooltip,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 interface DashboardClientProps {
   userEmail: string;
@@ -30,6 +41,30 @@ type CategoryStat = {
   count: number;
 };
 
+type AnalyticsResponse = {
+  summary: MonthlyStats;
+  categoryStats: CategoryStat[];
+};
+
+type PieChartEntry = {
+  cx: number;
+  cy: number;
+  midAngle?: number;
+  outerRadius: number;
+  payload?: {
+    categoryName: string;
+    totalAmount: number;
+  };
+};
+
+type XAxisTickProps = {
+  x: number;
+  y: number;
+  payload: {
+    value: string | number;
+  };
+};
+
 type MonthlyTrend = {
   year: number;
   month: number;
@@ -38,12 +73,6 @@ type MonthlyTrend = {
   totalExpense: number;
   balance: number;
   savingsRate: number;
-};
-
-type DailyStat = {
-  date: string;
-  income: number;
-  expense: number;
 };
 
 export function DashboardClient({ userEmail }: DashboardClientProps) {
@@ -71,11 +100,11 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const [trendStartMonth, setTrendStartMonth] = useState(now.getMonth() + 1);
 
   useEffect(() => {
-    fetchMonthlyStats();
+    void fetchMonthlyStats();
   }, [selectedYear, selectedMonth]);
 
   useEffect(() => {
-    fetchMonthlyTrends();
+    void fetchMonthlyTrends();
   }, [trendStartYear, trendStartMonth]);
 
   // 両方のデータが読み込まれたら初期ロードを終了
@@ -94,15 +123,15 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       const endOfMonth = new Date(selectedYear, selectedMonth, 0); // 次の月の0日 = 今月の最終日
 
       // ISO形式で日付のみを取得（YYYY-MM-DD）
-      const startDateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-01`;
-      const endDateStr = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}`;
+      const startDateStr = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-01`;
+      const endDateStr = `${selectedYear}-${String(selectedMonth).padStart(2, "0")}-${String(endOfMonth.getDate()).padStart(2, "0")}`;
 
       const response = await fetch(
         `/api/analytics?startDate=${startDateStr}&endDate=${endDateStr}`
       );
 
       if (response.ok) {
-        const data = await response.json();
+        const data = (await response.json()) as AnalyticsResponse;
         setStats(data.summary);
         setCategoryStats(data.categoryStats || []);
       }
@@ -129,12 +158,11 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         const month = targetDate.getMonth() + 1;
 
         // その月の1日から月末までを取得
-        const startOfMonth = new Date(year, month - 1, 1);
         const endOfMonth = new Date(year, month, 0); // 次の月の0日 = 今月の最終日
 
         // ISO形式で日付のみを取得（YYYY-MM-DD）
-        const startDateStr = `${year}-${String(month).padStart(2, '0')}-01`;
-        const endDateStr = `${year}-${String(month).padStart(2, '0')}-${String(endOfMonth.getDate()).padStart(2, '0')}`;
+        const startDateStr = `${year}-${String(month).padStart(2, "0")}-01`;
+        const endDateStr = `${year}-${String(month).padStart(2, "0")}-${String(endOfMonth.getDate()).padStart(2, "0")}`;
 
         const response = await fetch(
           `/api/analytics?startDate=${startDateStr}&endDate=${endDateStr}`
@@ -145,16 +173,17 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         let balance = 0;
 
         if (response.ok) {
-          const data = await response.json();
+          const data = (await response.json()) as AnalyticsResponse;
           totalIncome = data.summary.totalIncome || 0;
           totalExpense = data.summary.totalExpense || 0;
           balance = data.summary.balance || 0;
         }
 
         // 貯蓄率を計算（収入が0の場合は0%）
-        const savingsRate = totalIncome > 0
-          ? Math.max(0, Math.min(100, ((totalIncome - totalExpense) / totalIncome) * 100))
-          : 0;
+        const savingsRate =
+          totalIncome > 0
+            ? Math.max(0, Math.min(100, ((totalIncome - totalExpense) / totalIncome) * 100))
+            : 0;
 
         // データがない月も0として追加
         trends.push({
@@ -203,11 +232,6 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     setSelectedMonth(now.getMonth() + 1);
   };
 
-  const isCurrentMonth = () => {
-    const now = new Date();
-    return selectedYear === now.getFullYear() && selectedMonth === now.getMonth() + 1;
-  };
-
   const handlePreviousTrendPeriod = () => {
     if (trendStartMonth === 1) {
       setTrendStartMonth(12);
@@ -234,8 +258,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   };
 
   // 円グラフのカスタムラベル線
-  const renderCustomLabelLine = (entry: any) => {
+  const renderCustomLabelLine = (entry: PieChartEntry) => {
     const { cx, cy, midAngle, outerRadius } = entry;
+    if (midAngle === undefined) return <></>;
     const RADIAN = Math.PI / 180;
     // 線の始点：円の外周
     const x1 = cx + outerRadius * Math.cos(-midAngle * RADIAN);
@@ -245,15 +270,14 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     const x2 = cx + radius * Math.cos(-midAngle * RADIAN);
     const y2 = cy + radius * Math.sin(-midAngle * RADIAN);
 
-    return (
-      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="hsl(var(--foreground))" strokeWidth={1} />
-    );
+    return <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="hsl(var(--foreground))" strokeWidth={1} />;
   };
 
   // 円グラフのカスタムラベル
-  const renderCustomLabel = (entry: any) => {
+  const renderCustomLabel = (entry: PieChartEntry) => {
     const { cx, cy, midAngle, outerRadius } = entry;
-    const { categoryName, totalAmount } = entry.payload;
+    if (midAngle === undefined) return <></>;
+    const { categoryName, totalAmount } = entry.payload ?? { categoryName: "", totalAmount: 0 };
     const RADIAN = Math.PI / 180;
     // ラベルを円の外側からさらに150px離す
     const radius = outerRadius + 50;
@@ -261,24 +285,28 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     const y = cy + radius * Math.sin(-midAngle * RADIAN);
     const percentage = ((totalAmount / stats.totalExpense) * 100).toFixed(0);
     return (
-      <text x={x} y={y} fill="hsl(var(--foreground))" fontSize={14} textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+      <text
+        x={x}
+        y={y}
+        fill="hsl(var(--foreground))"
+        fontSize={14}
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+      >
         {`${categoryName} (${percentage}%)`}
       </text>
     );
   };
 
-  const selectedMonthLabel = `${selectedYear}年${selectedMonth}月`;
-
   // 収入と支出のカテゴリーを分離
-  const incomeCategories = categoryStats.filter(stat => stat.categoryType === "income");
-  const expenseCategories = categoryStats.filter(stat => stat.categoryType === "expense");
+  const expenseCategories = categoryStats.filter((stat) => stat.categoryType === "expense");
 
   // 1%未満のカテゴリーを「その他」にまとめる
   const prepareChartData = (categories: CategoryStat[], total: number) => {
     const significantCategories: CategoryStat[] = [];
     const smallCategories: CategoryStat[] = [];
 
-    categories.forEach(category => {
+    categories.forEach((category) => {
       const percentage = (category.totalAmount / total) * 100;
       if (percentage >= 1) {
         significantCategories.push(category);
@@ -292,9 +320,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
       const othersTotal = smallCategories.reduce((sum, cat) => sum + cat.totalAmount, 0);
       const othersCount = smallCategories.reduce((sum, cat) => sum + cat.count, 0);
       significantCategories.push({
-        categoryId: 'others',
-        categoryName: 'その他',
-        categoryType: 'expense',
+        categoryId: "others",
+        categoryName: "その他",
+        categoryType: "expense",
         totalAmount: othersTotal,
         count: othersCount,
       });
@@ -306,8 +334,8 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
   const chartExpenseCategories = prepareChartData(expenseCategories, stats.totalExpense);
 
   // 円グラフ用のカラーパレット（グレースケール）
-  const COLORS = ['#2d2d2d', '#4a4a4a', '#6b6b6b', '#8c8c8c', '#adadad'];
-  const OTHER_COLOR = '#cecece'; // 6つ目以降の色（薄いグレー）
+  const COLORS = ["#2d2d2d", "#4a4a4a", "#6b6b6b", "#8c8c8c", "#adadad"];
+  const OTHER_COLOR = "#cecece"; // 6つ目以降の色（薄いグレー）
 
   // 色を取得する関数（上位5つまで異なる色、6つ目以降は同じ色）
   const getColor = (index: number) => {
@@ -342,22 +370,22 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
               <div className="flex items-center justify-between">
                 <CardTitle className="text-2xl">収支推移</CardTitle>
                 <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handlePreviousTrendPeriod}
-                  className="cursor-pointer"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleNextTrendPeriod}
-                  className="cursor-pointer"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handlePreviousTrendPeriod}
+                    className="cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleNextTrendPeriod}
+                    className="cursor-pointer"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -372,78 +400,81 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
               ) : (
                 <div className="w-full h-[500px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={monthlyTrends} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                    <XAxis
-                      dataKey="label"
-                      stroke="#666"
-                      tick={(props) => {
-                        const { x, y, payload } = props;
-                        const currentMonth = `${now.getFullYear()}/${now.getMonth() + 1}`;
-                        const isCurrentMonth = payload.value === currentMonth;
-                        return (
-                          <g transform={`translate(${x},${y})`}>
-                            <text
-                              x={0}
-                              y={0}
-                              dy={16}
-                              textAnchor="middle"
-                              fill="#666"
-                              fontSize={12}
-                              fontWeight={isCurrentMonth ? 'bold' : 'normal'}
-                            >
-                              {payload.value}
-                            </text>
-                          </g>
-                        );
-                      }}
-                    />
-                    <YAxis
-                      stroke="#666"
-                      tick={{ fill: '#666', fontSize: 12 }}
-                      tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
-                      ticks={(() => {
-                        const maxValue = Math.max(
-                          ...monthlyTrends.map(t => Math.max(t.totalIncome, t.totalExpense)),
-                          0
-                        );
-                        const step = 100000;
-                        const maxTick = Math.ceil(maxValue / step) * step;
-                        const ticks = [];
-                        for (let i = 0; i <= maxTick; i += step) {
-                          ticks.push(i);
-                        }
-                        return ticks;
-                      })()}
-                    />
-                    <Tooltip
-                      formatter={(value: number) => formatCurrency(value)}
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--card))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '4px',
-                        color: 'hsl(var(--card-foreground))',
-                      }}
-                    />
-                    <Legend />
-                    <Line
-                      type="monotone"
-                      dataKey="totalIncome"
-                      stroke="#22c55e"
-                      strokeWidth={2}
-                      dot={{ fill: '#22c55e', r: 4 }}
-                      name="収入"
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="totalExpense"
-                      stroke="#ef4444"
-                      strokeWidth={2}
-                      dot={{ fill: '#ef4444', r: 4 }}
-                      name="支出"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                    <LineChart
+                      data={monthlyTrends}
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                      <XAxis
+                        dataKey="label"
+                        stroke="#666"
+                        tick={(props: XAxisTickProps) => {
+                          const { x, y, payload } = props;
+                          const currentMonth = `${now.getFullYear()}/${now.getMonth() + 1}`;
+                          const isCurrentMonth = payload.value === currentMonth;
+                          return (
+                            <g transform={`translate(${x},${y})`}>
+                              <text
+                                x={0}
+                                y={0}
+                                dy={16}
+                                textAnchor="middle"
+                                fill="#666"
+                                fontSize={12}
+                                fontWeight={isCurrentMonth ? "bold" : "normal"}
+                              >
+                                {payload.value}
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
+                      <YAxis
+                        stroke="#666"
+                        tick={{ fill: "#666", fontSize: 12 }}
+                        tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+                        ticks={(() => {
+                          const maxValue = Math.max(
+                            ...monthlyTrends.map((t) => Math.max(t.totalIncome, t.totalExpense)),
+                            0
+                          );
+                          const step = 100000;
+                          const maxTick = Math.ceil(maxValue / step) * step;
+                          const ticks = [];
+                          for (let i = 0; i <= maxTick; i += step) {
+                            ticks.push(i);
+                          }
+                          return ticks;
+                        })()}
+                      />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "4px",
+                          color: "hsl(var(--card-foreground))",
+                        }}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="totalIncome"
+                        stroke="#22c55e"
+                        strokeWidth={2}
+                        dot={{ fill: "#22c55e", r: 4 }}
+                        name="収入"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="totalExpense"
+                        stroke="#ef4444"
+                        strokeWidth={2}
+                        dot={{ fill: "#ef4444", r: 4 }}
+                        name="支出"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
               )}
             </CardContent>
@@ -454,7 +485,9 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         <Card className="mb-8">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">支出詳細 ({selectedYear}/{selectedMonth})</CardTitle>
+              <CardTitle className="text-2xl">
+                支出詳細 ({selectedYear}/{selectedMonth})
+              </CardTitle>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -492,29 +525,29 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
               </div>
             ) : (
               <div>
-                  <h3 className="text-lg font-semibold mb-4">カテゴリー別内訳</h3>
-                  <div className="w-full h-[800px] flex items-center justify-center">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={chartExpenseCategories}
-                          dataKey="totalAmount"
-                          nameKey="categoryName"
-                          cx="50%"
-                          cy="50%"
-                          startAngle={90}
-                          endAngle={-270}
-                          label={renderCustomLabel}
-                          labelLine={renderCustomLabelLine}
-                        >
-                          {chartExpenseCategories.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={getColor(index)} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
+                <h3 className="text-lg font-semibold mb-4">カテゴリー別内訳</h3>
+                <div className="w-full h-[800px] flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={chartExpenseCategories}
+                        dataKey="totalAmount"
+                        nameKey="categoryName"
+                        cx="50%"
+                        cy="50%"
+                        startAngle={90}
+                        endAngle={-270}
+                        label={renderCustomLabel}
+                        labelLine={renderCustomLabelLine}
+                      >
+                        {chartExpenseCategories.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={getColor(index)} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
           </CardContent>

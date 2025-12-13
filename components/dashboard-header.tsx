@@ -9,7 +9,7 @@ interface DashboardHeaderProps {
   userEmail: string;
 }
 
-export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
+export function DashboardHeader({ userEmail: _userEmail }: DashboardHeaderProps) {
   const { openTransactionDialog } = useTransactionDialog();
 
   return (

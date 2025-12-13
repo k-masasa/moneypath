@@ -1,12 +1,14 @@
 # MoneyPath セットアップガイド
 
 ## 前提条件
+
 - Docker Desktop がインストールされていること
 - Node.js 20以上がインストールされていること（ローカル実行の場合）
 
 ## Docker Composeでの起動（推奨）
 
 ### 1. Docker Desktopを起動
+
 まず、Docker Desktopアプリケーションを起動してください。
 
 ### 2. 開発環境で起動
@@ -98,6 +100,7 @@ http://localhost:3000/api/health
 ```
 
 正常な場合のレスポンス：
+
 ```json
 {
   "status": "ok",
@@ -110,6 +113,7 @@ http://localhost:3000/api/health
 ## トラブルシューティング
 
 ### ポート3000が既に使用されている
+
 ```bash
 # 使用中のプロセスを確認
 lsof -i :3000
@@ -118,6 +122,7 @@ lsof -i :3000
 ```
 
 ### データベース接続エラー
+
 ```bash
 # DBコンテナの状態を確認
 docker-compose -f docker-compose.dev.yml ps
@@ -130,6 +135,7 @@ docker-compose -f docker-compose.dev.yml restart db
 ```
 
 ### Prismaクライアントのエラー
+
 ```bash
 # Prismaクライアントを再生成
 npx prisma generate

@@ -11,7 +11,7 @@ const signUpSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as unknown;
     const validatedData = signUpSchema.parse(body);
 
     // メールアドレスの重複チェック
@@ -60,9 +60,6 @@ export async function POST(request: Request) {
     }
 
     console.error("Signup error:", error);
-    return NextResponse.json(
-      { error: "ユーザー登録に失敗しました" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "ユーザー登録に失敗しました" }, { status: 500 });
   }
 }

@@ -21,13 +21,13 @@ export function TransactionDialogProvider({ children }: { children: ReactNode })
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    fetchCategories();
+    void fetchCategories();
   }, []);
 
   const fetchCategories = async () => {
     try {
       const response = await fetch("/api/categories");
-      const data = await response.json();
+      const data = (await response.json()) as { categories: Category[] };
       setCategories(data.categories || []);
     } catch (error) {
       console.error("Failed to fetch categories:", error);

@@ -1,11 +1,22 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
+import { z } from "zod";
+import type { Session } from "next-auth";
+
+const scheduledPaymentSchema = z.object({
+  categoryId: z.string().uuid(),
+  estimatedAmount: z.number().positive(),
+  dueDate: z.string(),
+  memo: z.string().optional(),
+});
 
 // 支払い予定一覧取得
 export async function GET(request: Request) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
@@ -15,7 +26,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const isPublicBurdenParam = searchParams.get("isPublicBurden");
 
-    const where: any = {
+    const where: Prisma.ScheduledPaymentWhereInput = {
       userId: session.user.id,
     };
 
@@ -39,32 +50,23 @@ export async function GET(request: Request) {
     return NextResponse.json({ scheduledPayments });
   } catch (error) {
     console.error("Scheduled payments GET error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 // 支払い予定登録
 export async function POST(request: Request) {
   try {
-    const session = await auth();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { categoryId, estimatedAmount, dueDate, memo } = body;
-
-    // バリデーション
-    if (!categoryId || !estimatedAmount || !dueDate) {
-      return NextResponse.json(
-        { error: "必須項目が不足しています" },
-        { status: 400 }
-      );
-    }
+    const body = (await request.json()) as unknown;
+    const validated = scheduledPaymentSchema.parse(body);
+    const { categoryId, estimatedAmount, dueDate, memo } = validated;
 
     // カテゴリーの存在確認とユーザー所有確認
     const category = await prisma.category.findFirst({
@@ -76,10 +78,7 @@ export async function POST(request: Request) {
     });
 
     if (!category) {
-      return NextResponse.json(
-        { error: "カテゴリーが見つかりません" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
     }
 
     // カテゴリに公的負担フラグがあるか確認
@@ -104,9 +103,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ scheduledPayment }, { status: 201 });
   } catch (error) {
     console.error("Scheduled payment POST error:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

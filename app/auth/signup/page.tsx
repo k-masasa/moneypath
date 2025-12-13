@@ -6,7 +6,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -32,7 +39,7 @@ export default function SignUpPage() {
         body: JSON.stringify(formData),
       });
 
-      const data = await response.json();
+      const data = (await response.json()) as { error?: string };
 
       if (!response.ok) {
         throw new Error(data.error || "登録に失敗しました");
@@ -54,9 +61,7 @@ export default function SignUpPage() {
             MoneyPath
           </Link>
           <CardTitle>新規アカウント作成</CardTitle>
-          <CardDescription>
-            メールアドレスとパスワードを入力してください
-          </CardDescription>
+          <CardDescription>メールアドレスとパスワードを入力してください</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -65,16 +70,19 @@ export default function SignUpPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="name">名前（任意）</Label>
               <Input
                 id="name"
                 type="text"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
 
@@ -85,9 +93,7 @@ export default function SignUpPage() {
                 type="email"
                 required
                 value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
 
@@ -99,9 +105,7 @@ export default function SignUpPage() {
                 required
                 minLength={6}
                 value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />
             </div>
 

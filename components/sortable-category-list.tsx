@@ -61,8 +61,9 @@ function SortableItem({
   onDelete: (id: string) => void;
   isChild?: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: category.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: category.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -75,9 +76,7 @@ function SortableItem({
       <Card>
         <CardContent className="flex items-center justify-between py-2 px-3">
           <div className="flex items-center gap-2">
-            {isChild && (
-              <span className="text-muted-foreground text-xs">└─</span>
-            )}
+            {isChild && <span className="text-muted-foreground text-xs">└─</span>}
             <button
               className="cursor-grab active:cursor-grabbing touch-none"
               {...attributes}
@@ -157,11 +156,7 @@ export function SortableCategoryList({
   }
 
   if (items.length === 0) {
-    return (
-      <p className="text-muted-foreground text-sm">
-        カテゴリーがありません
-      </p>
-    );
+    return <p className="text-muted-foreground text-sm">カテゴリーがありません</p>;
   }
 
   // 親カテゴリーとその子カテゴリーを階層的に並べる
@@ -180,15 +175,8 @@ export function SortableCategoryList({
   });
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={items.map((item) => item.id)}
-        strategy={verticalListSortingStrategy}
-      >
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={items.map((item) => item.id)} strategy={verticalListSortingStrategy}>
         <div className="space-y-2">
           {hierarchicalItems.map(({ category, isChild }) => (
             <SortableItem

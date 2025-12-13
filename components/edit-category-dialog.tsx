@@ -117,7 +117,12 @@ export function EditCategoryDialog({
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-4"
+          >
             <div className="space-y-2">
               <Label htmlFor="edit-category-name">カテゴリー名</Label>
               <Input
@@ -125,9 +130,7 @@ export function EditCategoryDialog({
                 type="text"
                 required
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
 

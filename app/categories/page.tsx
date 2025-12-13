@@ -1,16 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoading } from "@/components/loading-provider";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { DashboardSidebar } from "@/components/dashboard-sidebar";
 import { useSession } from "next-auth/react";
-import { Edit, Trash2 } from "lucide-react";
 import { EditCategoryDialog } from "@/components/edit-category-dialog";
 import { SortableCategoryList } from "@/components/sortable-category-list";
 
@@ -71,14 +69,14 @@ export default function CategoriesPage() {
   });
 
   useEffect(() => {
-    fetchCategories();
+    void fetchCategories();
   }, []);
 
   const fetchCategories = async () => {
     startLoading();
     try {
       const response = await fetch("/api/categories");
-      const data = await response.json();
+      const data = (await response.json()) as { categories: Category[] };
       setCategories(data.categories || []);
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -199,7 +197,9 @@ export default function CategoriesPage() {
         {categories.length === 0 && (
           <div className="mb-6">
             <Button
-              onClick={initializeDefaultCategories}
+              onClick={() => {
+                void initializeDefaultCategories();
+              }}
               variant="secondary"
             >
               デフォルトカテゴリーを作成
@@ -209,115 +209,118 @@ export default function CategoriesPage() {
 
         {/* フォーム */}
         <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>新規カテゴリー</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">カテゴリー名</Label>
-                    <Input
-                      id="name"
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="type">タイプ</Label>
-                    <select
-                      id="type"
-                      value={formData.type}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          type: e.target.value as "income" | "expense",
-                          parentCategoryId: "", // タイプ変更時に親カテゴリーをリセット
-                        })
-                      }
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <option value="expense">支出</option>
-                      <option value="income">収入</option>
-                    </select>
-                  </div>
+          <CardHeader>
+            <CardTitle>新規カテゴリー</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              onSubmit={(e) => {
+                void handleSubmit(e);
+              }}
+              className="space-y-4"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">カテゴリー名</Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
                 </div>
 
-                {/* 親カテゴリー選択 */}
                 <div className="space-y-2">
-                  <Label htmlFor="parentCategory">親カテゴリー（任意）</Label>
+                  <Label htmlFor="type">タイプ</Label>
                   <select
-                    id="parentCategory"
-                    value={formData.parentCategoryId || ""}
+                    id="type"
+                    value={formData.type}
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        parentCategoryId: e.target.value || null,
+                        type: e.target.value as "income" | "expense",
+                        parentCategoryId: "", // タイプ変更時に親カテゴリーをリセット
                       })
                     }
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    <option value="">なし（親カテゴリー）</option>
-                    {categories
-                      .filter(
-                        (c) =>
-                          c.type === formData.type &&
-                          !c.parentCategoryId // 親カテゴリーのみ表示
-                      )
-                      .map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
+                    <option value="expense">支出</option>
+                    <option value="income">収入</option>
                   </select>
                 </div>
+              </div>
 
-                {/* 公的負担チェックボックス */}
-                {formData.type === "expense" && (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="isPublicBurden"
-                      checked={formData.isPublicBurden}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          isPublicBurden: e.target.checked,
-                        })
-                      }
-                      className="h-4 w-4 rounded border-input"
-                    />
-                    <Label htmlFor="isPublicBurden" className="cursor-pointer">
-                      公的負担（税金・保険料など）
-                    </Label>
-                  </div>
-                )}
+              {/* 親カテゴリー選択 */}
+              <div className="space-y-2">
+                <Label htmlFor="parentCategory">親カテゴリー（任意）</Label>
+                <select
+                  id="parentCategory"
+                  value={formData.parentCategoryId || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      parentCategoryId: e.target.value || null,
+                    })
+                  }
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">なし（親カテゴリー）</option>
+                  {categories
+                    .filter(
+                      (c) => c.type === formData.type && !c.parentCategoryId // 親カテゴリーのみ表示
+                    )
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
 
-                <Button type="submit" className="w-full">
-                  作成
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              {/* 公的負担チェックボックス */}
+              {formData.type === "expense" && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isPublicBurden"
+                    checked={formData.isPublicBurden}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isPublicBurden: e.target.checked,
+                      })
+                    }
+                    className="h-4 w-4 rounded border-input"
+                  />
+                  <Label htmlFor="isPublicBurden" className="cursor-pointer">
+                    公的負担（税金・保険料など）
+                  </Label>
+                </div>
+              )}
+
+              <Button type="submit" className="w-full">
+                作成
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
 
         {/* カテゴリーリスト */}
         <div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* 収入カテゴリー */}
             <div>
-              <h3 className="text-xl font-bold mb-4">
-                収入カテゴリー ({incomeCategories.length})
-              </h3>
+              <h3 className="text-xl font-bold mb-4">収入カテゴリー ({incomeCategories.length})</h3>
               <SortableCategoryList
                 categories={incomeCategories}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
-                onReorder={handleReorder}
+                onDelete={(id) => {
+                  void handleDelete(id);
+                }}
+                onReorder={(categories) => {
+                  void handleReorder(categories);
+                }}
               />
             </div>
 
@@ -329,8 +332,12 @@ export default function CategoriesPage() {
               <SortableCategoryList
                 categories={expenseCategories}
                 onEdit={handleEdit}
-                onDelete={handleDelete}
-                onReorder={handleReorder}
+                onDelete={(id) => {
+                  void handleDelete(id);
+                }}
+                onReorder={(categories) => {
+                  void handleReorder(categories);
+                }}
               />
             </div>
           </div>

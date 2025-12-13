@@ -37,9 +37,7 @@ export function AddScheduledPaymentDialog({
   const { toast } = useToast();
   const { startLoading, stopLoading } = useLoading();
   const [categoryId, setCategoryId] = useState("");
-  const [payments, setPayments] = useState<PaymentItem[]>([
-    { amount: "", dueDate: "", memo: "" },
-  ]);
+  const [payments, setPayments] = useState<PaymentItem[]>([{ amount: "", dueDate: "", memo: "" }]);
 
   // 支出カテゴリーのみフィルタリング
   const expenseCategories = categories.filter((c) => c.type === "expense");
@@ -55,11 +53,7 @@ export function AddScheduledPaymentDialog({
     setPayments(payments.filter((_, i) => i !== index));
   };
 
-  const handlePaymentChange = (
-    index: number,
-    field: keyof PaymentItem,
-    value: string
-  ) => {
+  const handlePaymentChange = (index: number, field: keyof PaymentItem, value: string) => {
     const newPayments = [...payments];
     newPayments[index][field] = value;
     setPayments(newPayments);
@@ -77,9 +71,7 @@ export function AddScheduledPaymentDialog({
       return;
     }
 
-    const invalidPayments = payments.filter(
-      (p) => !p.amount || !p.dueDate
-    );
+    const invalidPayments = payments.filter((p) => !p.amount || !p.dueDate);
 
     if (invalidPayments.length > 0) {
       toast({
@@ -151,12 +143,15 @@ export function AddScheduledPaymentDialog({
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form
+            onSubmit={(e) => {
+              void handleSubmit(e);
+            }}
+            className="space-y-6"
+          >
             {/* カテゴリー選択 */}
             <div className="space-y-2">
-              <label className="text-sm font-medium">
-                カテゴリー
-              </label>
+              <label className="text-sm font-medium">カテゴリー</label>
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
@@ -183,12 +178,7 @@ export function AddScheduledPaymentDialog({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">支払い予定（複数回登録可能）</label>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAddPayment}
-                >
+                <Button type="button" size="sm" variant="outline" onClick={handleAddPayment}>
                   <Plus className="h-4 w-4 mr-1" />
                   追加
                 </Button>
@@ -197,17 +187,13 @@ export function AddScheduledPaymentDialog({
               {payments.map((payment, index) => (
                 <div key={index} className="flex gap-2 items-start">
                   <div className="flex-1 space-y-2">
-                    <div className="text-xs font-medium text-muted-foreground">
-                      {index + 1}回目
-                    </div>
+                    <div className="text-xs font-medium text-muted-foreground">{index + 1}回目</div>
                     <div className="grid grid-cols-2 gap-2">
                       <Input
                         type="number"
                         placeholder="金額"
                         value={payment.amount}
-                        onChange={(e) =>
-                          handlePaymentChange(index, "amount", e.target.value)
-                        }
+                        onChange={(e) => handlePaymentChange(index, "amount", e.target.value)}
                         required
                         min="0"
                         step="1"
@@ -215,9 +201,7 @@ export function AddScheduledPaymentDialog({
                       <Input
                         type="date"
                         value={payment.dueDate}
-                        onChange={(e) =>
-                          handlePaymentChange(index, "dueDate", e.target.value)
-                        }
+                        onChange={(e) => handlePaymentChange(index, "dueDate", e.target.value)}
                         required
                       />
                     </div>
@@ -225,9 +209,7 @@ export function AddScheduledPaymentDialog({
                       type="text"
                       placeholder="メモ（任意）"
                       value={payment.memo}
-                      onChange={(e) =>
-                        handlePaymentChange(index, "memo", e.target.value)
-                      }
+                      onChange={(e) => handlePaymentChange(index, "memo", e.target.value)}
                     />
                   </div>
                   {payments.length > 1 && (
