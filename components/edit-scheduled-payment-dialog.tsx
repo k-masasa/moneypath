@@ -170,6 +170,7 @@ export function EditScheduledPaymentDialog({
                 onChange={(e) => setFormData({ ...formData, estimatedAmount: e.target.value })}
                 required
                 min="0"
+                max="1000000000"
                 step="1"
               />
             </div>
@@ -197,6 +198,7 @@ export function EditScheduledPaymentDialog({
                 id="edit-memo"
                 type="text"
                 placeholder="メモ（任意）"
+                maxLength={500}
                 value={formData.memo}
                 onChange={(e) => setFormData({ ...formData, memo: e.target.value })}
               />

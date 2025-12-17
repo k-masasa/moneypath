@@ -82,6 +82,7 @@ function SignInForm() {
                 id="email"
                 type="email"
                 required
+                maxLength={255}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
@@ -93,6 +94,7 @@ function SignInForm() {
                 id="password"
                 type="password"
                 required
+                maxLength={128}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />

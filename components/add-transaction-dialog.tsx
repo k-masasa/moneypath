@@ -214,6 +214,7 @@ export function AddTransactionDialog({
                   type="number"
                   required
                   min="0"
+                  max="1000000000"
                   step="1"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -235,6 +236,7 @@ export function AddTransactionDialog({
                 <Input
                   id="description"
                   type="text"
+                  maxLength={500}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="メモ（任意）"

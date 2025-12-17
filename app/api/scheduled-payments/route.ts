@@ -7,9 +7,12 @@ import type { Session } from "next-auth";
 
 const scheduledPaymentSchema = z.object({
   categoryId: z.string().uuid(),
-  estimatedAmount: z.number().positive(),
+  estimatedAmount: z
+    .number()
+    .positive({ message: "予定金額は正の数である必要があります" })
+    .max(1000000000, { message: "予定金額は10億以下である必要があります" }),
   dueDate: z.string(),
-  memo: z.string().optional(),
+  memo: z.string().max(500, { message: "メモは500文字以内である必要があります" }).optional(),
 });
 
 // 支払い予定一覧取得

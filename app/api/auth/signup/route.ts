@@ -4,9 +4,15 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const signUpSchema = z.object({
-  email: z.string().email({ message: "有効なメールアドレスを入力してください" }),
-  password: z.string().min(6, { message: "パスワードは6文字以上にしてください" }),
-  name: z.string().optional(),
+  email: z
+    .string()
+    .email({ message: "有効なメールアドレスを入力してください" })
+    .max(255, { message: "メールアドレスは255文字以内である必要があります" }),
+  password: z
+    .string()
+    .min(6, { message: "パスワードは6文字以上にしてください" })
+    .max(128, { message: "パスワードは128文字以内である必要があります" }),
+  name: z.string().max(100, { message: "名前は100文字以内である必要があります" }).optional(),
 });
 
 export async function POST(request: Request) {

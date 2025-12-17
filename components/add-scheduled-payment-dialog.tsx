@@ -196,6 +196,7 @@ export function AddScheduledPaymentDialog({
                         onChange={(e) => handlePaymentChange(index, "amount", e.target.value)}
                         required
                         min="0"
+                        max="1000000000"
                         step="1"
                       />
                       <Input
@@ -208,6 +209,7 @@ export function AddScheduledPaymentDialog({
                     <Input
                       type="text"
                       placeholder="メモ（任意）"
+                      maxLength={500}
                       value={payment.memo}
                       onChange={(e) => handlePaymentChange(index, "memo", e.target.value)}
                     />
