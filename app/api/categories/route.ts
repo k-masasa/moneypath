@@ -6,15 +6,22 @@ import { z } from "zod";
 import type { Session } from "next-auth";
 
 const categorySchema = z.object({
-  name: z.string().min(1, { message: "カテゴリー名を入力してください" }),
+  name: z
+    .string()
+    .min(1, { message: "カテゴリー名を入力してください" })
+    .max(50, { message: "カテゴリー名は50文字以内である必要があります" }),
   type: z.enum(["income", "expense"], {
     message: "タイプは income または expense である必要があります",
   }),
-  color: z.string().optional(),
-  icon: z.string().optional(),
+  color: z.string().max(20, { message: "カラーコードは20文字以内である必要があります" }).optional(),
+  icon: z.string().max(50, { message: "アイコン名は50文字以内である必要があります" }).optional(),
   order: z.number().int().optional(),
   isPublicBurden: z.boolean().optional(),
-  parentCategoryId: z.string().nullable().optional(),
+  parentCategoryId: z
+    .string()
+    .max(36, { message: "親カテゴリーIDは36文字以内である必要があります" })
+    .nullable()
+    .optional(),
 });
 
 // カテゴリー一覧取得

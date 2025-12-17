@@ -226,6 +226,7 @@ export default function CategoriesPage() {
                     id="name"
                     type="text"
                     required
+                    maxLength={50}
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />

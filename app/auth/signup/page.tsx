@@ -69,6 +69,7 @@ export default function SignUpPage() {
               <Input
                 id="name"
                 type="text"
+                maxLength={100}
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
@@ -80,6 +81,7 @@ export default function SignUpPage() {
                 id="email"
                 type="email"
                 required
+                maxLength={255}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
@@ -92,6 +94,7 @@ export default function SignUpPage() {
                 type="password"
                 required
                 minLength={6}
+                maxLength={128}
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               />

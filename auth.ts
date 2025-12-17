@@ -7,8 +7,14 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 
 const signInSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: z
+    .string()
+    .email()
+    .max(255, { message: "メールアドレスは255文字以内である必要があります" }),
+  password: z
+    .string()
+    .min(6, { message: "パスワードは6文字以上である必要があります" })
+    .max(128, { message: "パスワードは128文字以内である必要があります" }),
 });
 
 // NextAuth v5 beta の型定義の問題を回避
@@ -30,13 +36,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           });
 
           if (!user) {
-            throw new Error("ユーザーが見つかりません");
+            throw new Error("メールアドレスまたはパスワードが正しくありません");
           }
 
           const isValidPassword = await bcrypt.compare(password, user.password);
 
           if (!isValidPassword) {
-            throw new Error("パスワードが正しくありません");
+            throw new Error("メールアドレスまたはパスワードが正しくありません");
           }
 
           return {
