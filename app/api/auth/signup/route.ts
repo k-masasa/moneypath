@@ -91,13 +91,17 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const fieldErrors = error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
       return NextResponse.json(
-        { error: "入力内容に誤りがあります", details: error.issues },
+        { error: "入力内容に誤りがあります", fields: fieldErrors },
         { status: StatusCodes.BAD_REQUEST }
       );
     }
 
-    console.error("Signup error:", error);
+    console.error("Signup error:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json(
       { error: "ユーザー登録に失敗しました" },
       { status: StatusCodes.INTERNAL_SERVER_ERROR }

@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { z } from "zod";
 import type { Session } from "next-auth";
+import { StatusCodes } from "http-status-codes";
 
 const scheduledPaymentSchema = z.object({
   categoryId: z.string().uuid(),
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     // URLパラメータから公的負担フラグを取得
@@ -52,8 +53,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ scheduledPayments });
   } catch (error) {
-    console.error("Scheduled payments GET error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error(
+      "Scheduled payments GET error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -64,7 +71,7 @@ export async function POST(request: Request) {
     const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const body = (await request.json()) as unknown;
@@ -81,7 +88,10 @@ export async function POST(request: Request) {
     });
 
     if (!category) {
-      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "カテゴリーが見つかりません" },
+        { status: StatusCodes.NOT_FOUND }
+      );
     }
 
     // カテゴリに公的負担フラグがあるか確認
@@ -103,9 +113,15 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ scheduledPayment }, { status: 201 });
+    return NextResponse.json({ scheduledPayment }, { status: StatusCodes.CREATED });
   } catch (error) {
-    console.error("Scheduled payment POST error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error(
+      "Scheduled payment POST error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

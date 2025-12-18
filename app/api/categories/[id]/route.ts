@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { StatusCodes } from "http-status-codes";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -20,7 +21,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const { id } = await params;
@@ -33,13 +34,16 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
 
     if (!existingCategory) {
-      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "カテゴリーが見つかりません" },
+        { status: StatusCodes.NOT_FOUND }
+      );
     }
 
     if (existingCategory.userId !== session.user.id) {
       return NextResponse.json(
         { error: "このカテゴリーを編集する権限がありません" },
-        { status: 403 }
+        { status: StatusCodes.FORBIDDEN }
       );
     }
 
@@ -51,14 +55,24 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ category });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const fieldErrors = error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
       return NextResponse.json(
-        { error: "入力内容に誤りがあります", details: error.issues },
-        { status: 400 }
+        { error: "入力内容に誤りがあります", fields: fieldErrors },
+        { status: StatusCodes.BAD_REQUEST }
       );
     }
 
-    console.error("Update category error:", error);
-    return NextResponse.json({ error: "カテゴリーの更新に失敗しました" }, { status: 500 });
+    console.error(
+      "Update category error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "カテゴリーの更新に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -68,7 +82,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const { id } = await params;
@@ -79,13 +93,32 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     });
 
     if (!existingCategory) {
-      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "カテゴリーが見つかりません" },
+        { status: StatusCodes.NOT_FOUND }
+      );
     }
 
     if (existingCategory.userId !== session.user.id) {
       return NextResponse.json(
         { error: "このカテゴリーを削除する権限がありません" },
-        { status: 403 }
+        { status: StatusCodes.FORBIDDEN }
+      );
+    }
+
+    // 関連するトランザクション数を確認
+    const relatedTransactionsCount = await prisma.transaction.count({
+      where: { categoryId: id },
+    });
+
+    if (relatedTransactionsCount > 0) {
+      return NextResponse.json(
+        {
+          error: "このカテゴリーには関連するトランザクションがあります",
+          transactionCount: relatedTransactionsCount,
+          suggestion: "先にトランザクションを削除するか、別のカテゴリーに移動してください",
+        },
+        { status: StatusCodes.BAD_REQUEST }
       );
     }
 
@@ -95,7 +128,13 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     return NextResponse.json({ message: "カテゴリーを削除しました" });
   } catch (error) {
-    console.error("Delete category error:", error);
-    return NextResponse.json({ error: "カテゴリーの削除に失敗しました" }, { status: 500 });
+    console.error(
+      "Delete category error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "カテゴリーの削除に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

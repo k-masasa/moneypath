@@ -54,7 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: user.name,
           };
         } catch (error) {
-          console.error("Auth error:", error);
+          console.error("Auth error:", error instanceof Error ? error.message : "Unknown error");
           return null;
         }
       },
@@ -62,6 +62,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   pages: {
     signIn: "/auth/signin",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30日
+    updateAge: 24 * 60 * 60, // 24時間ごとに更新
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30日
   },
   callbacks: {
     jwt({ token, user }: { token: JWT; user?: User }) {

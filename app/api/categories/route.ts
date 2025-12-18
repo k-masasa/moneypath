@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { StatusCodes } from "http-status-codes";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const { searchParams } = new URL(request.url);
@@ -65,8 +66,14 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ categories });
   } catch (error) {
-    console.error("Get categories error:", error);
-    return NextResponse.json({ error: "カテゴリーの取得に失敗しました" }, { status: 500 });
+    console.error(
+      "Get categories error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "カテゴリーの取得に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -76,7 +83,7 @@ export async function POST(request: Request) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const body = (await request.json()) as unknown;
@@ -89,16 +96,26 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ category }, { status: 201 });
+    return NextResponse.json({ category }, { status: StatusCodes.CREATED });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const fieldErrors = error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
       return NextResponse.json(
-        { error: "入力内容に誤りがあります", details: error.issues },
-        { status: 400 }
+        { error: "入力内容に誤りがあります", fields: fieldErrors },
+        { status: StatusCodes.BAD_REQUEST }
       );
     }
 
-    console.error("Create category error:", error);
-    return NextResponse.json({ error: "カテゴリーの作成に失敗しました" }, { status: 500 });
+    console.error(
+      "Create category error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "カテゴリーの作成に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
