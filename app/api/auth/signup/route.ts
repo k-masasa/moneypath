@@ -12,8 +12,11 @@ const signUpSchema = z.object({
     .max(255, { message: "メールアドレスは255文字以内である必要があります" }),
   password: z
     .string()
-    .min(6, { message: "パスワードは6文字以上にしてください" })
-    .max(128, { message: "パスワードは128文字以内である必要があります" }),
+    .min(8, { message: "パスワードは8文字以上にしてください" })
+    .max(128, { message: "パスワードは128文字以内である必要があります" })
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+      message: "パスワードは小文字、大文字、数字を含む必要があります",
+    }),
   name: z.string().max(100, { message: "名前は100文字以内である必要があります" }).optional(),
 });
 
@@ -50,9 +53,14 @@ export async function POST(request: Request) {
     });
 
     if (existingUser) {
+      // ユーザー列挙攻撃対策: タイミング攻撃を防ぐため、わざと遅延
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      // 既存ユーザーの存在を明示せず、一般的なメッセージを返す
       return NextResponse.json(
-        { error: "このメールアドレスは既に登録されています" },
-        { status: StatusCodes.BAD_REQUEST }
+        {
+          message: "登録処理を受け付けました。確認メールをご確認ください。",
+        },
+        { status: StatusCodes.OK }
       );
     }
 

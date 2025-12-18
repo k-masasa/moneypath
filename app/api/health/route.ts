@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { StatusCodes } from "http-status-codes";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
@@ -24,7 +25,7 @@ export async function GET() {
         message: "Database connection failed",
         database: "disconnected",
       },
-      { status: 500 }
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
     );
   }
 }
