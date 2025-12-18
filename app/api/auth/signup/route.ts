@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { StatusCodes } from "http-status-codes";
+import { checkRateLimit, AUTH_RATE_LIMIT } from "@/lib/rate-limit";
 
 const signUpSchema = z.object({
   email: z
@@ -17,6 +19,28 @@ const signUpSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // レート制限チェック
+    const identifier =
+      request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? "unknown";
+    const rateLimitResult = checkRateLimit(identifier, AUTH_RATE_LIMIT);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          error: "リクエストが多すぎます。しばらく待ってから再度お試しください。",
+          retryAfter: rateLimitResult.reset,
+        },
+        {
+          status: StatusCodes.TOO_MANY_REQUESTS,
+          headers: {
+            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": rateLimitResult.reset.toString(),
+          },
+        }
+      );
+    }
+
     const body = (await request.json()) as unknown;
     const validatedData = signUpSchema.parse(body);
 
@@ -28,7 +52,7 @@ export async function POST(request: Request) {
     if (existingUser) {
       return NextResponse.json(
         { error: "このメールアドレスは既に登録されています" },
-        { status: 400 }
+        { status: StatusCodes.BAD_REQUEST }
       );
     }
 
@@ -55,17 +79,20 @@ export async function POST(request: Request) {
         message: "ユーザー登録が完了しました",
         user,
       },
-      { status: 201 }
+      { status: StatusCodes.CREATED }
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "入力内容に誤りがあります", details: error.issues },
-        { status: 400 }
+        { status: StatusCodes.BAD_REQUEST }
       );
     }
 
     console.error("Signup error:", error);
-    return NextResponse.json({ error: "ユーザー登録に失敗しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "ユーザー登録に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
