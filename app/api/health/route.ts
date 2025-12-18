@@ -14,10 +14,14 @@ export async function GET() {
       database: "connected",
     });
   } catch (error) {
+    // エラーの詳細はサーバー側のログにのみ記録
+    console.error("Health check failed:", error instanceof Error ? error.message : "Unknown error");
+
+    // クライアントには一般的なエラーメッセージのみを返す
     return NextResponse.json(
       {
         status: "error",
-        message: error instanceof Error ? error.message : "Unknown error",
+        message: "Database connection failed",
         database: "disconnected",
       },
       { status: 500 }
