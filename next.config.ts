@@ -3,7 +3,32 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   async headers() {
+    // 本番環境でのCORS設定（環境変数で制御）
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || null;
+
+    const apiHeaders = allowedOrigin
+      ? [
+          {
+            key: "Access-Control-Allow-Origin",
+            value: allowedOrigin,
+          },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET, POST, PUT, DELETE, OPTIONS",
+          },
+          {
+            key: "Access-Control-Allow-Headers",
+            value: "Content-Type, Authorization",
+          },
+          {
+            key: "Access-Control-Max-Age",
+            value: "86400", // 24時間
+          },
+        ]
+      : [];
+
     return [
+      // セキュリティヘッダー（全てのページ）
       {
         source: "/:path*",
         headers: [
@@ -43,6 +68,15 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      // API エンドポイント専用のCORS設定（ALLOWED_ORIGIN環境変数がある場合のみ）
+      ...(allowedOrigin
+        ? [
+            {
+              source: "/api/:path*",
+              headers: apiHeaders,
+            },
+          ]
+        : []),
     ];
   },
 };

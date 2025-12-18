@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { StatusCodes } from "http-status-codes";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
@@ -21,16 +22,16 @@ export async function GET(request: Request) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("categoryId");
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
-    const minAmount = searchParams.get("minAmount");
-    const maxAmount = searchParams.get("maxAmount");
-    const limit = searchParams.get("limit");
+    const startDateStr = searchParams.get("startDate");
+    const endDateStr = searchParams.get("endDate");
+    const minAmountStr = searchParams.get("minAmount");
+    const maxAmountStr = searchParams.get("maxAmount");
+    const limitStr = searchParams.get("limit");
 
     const where: Prisma.TransactionWhereInput = { userId: session.user.id };
 
@@ -55,27 +56,97 @@ export async function GET(request: Request) {
       }
     }
 
-    if (startDate || endDate) {
+    // 日付バリデーション
+    if (startDateStr || endDateStr) {
+      const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+        message: "日付はYYYY-MM-DD形式で指定してください",
+      });
+
+      try {
+        if (startDateStr) dateSchema.parse(startDateStr);
+        if (endDateStr) dateSchema.parse(endDateStr);
+      } catch {
+        return NextResponse.json(
+          { error: "無効な日付形式です。YYYY-MM-DD形式で指定してください" },
+          { status: StatusCodes.BAD_REQUEST }
+        );
+      }
+
       where.date = {};
-      if (startDate) {
-        where.date.gte = new Date(startDate);
+      if (startDateStr) {
+        const startDate = new Date(startDateStr);
+        if (isNaN(startDate.getTime())) {
+          return NextResponse.json(
+            { error: "無効な開始日です" },
+            { status: StatusCodes.BAD_REQUEST }
+          );
+        }
+        where.date.gte = startDate;
       }
-      if (endDate) {
-        where.date.lte = new Date(endDate);
+      if (endDateStr) {
+        const endDate = new Date(endDateStr);
+        if (isNaN(endDate.getTime())) {
+          return NextResponse.json(
+            { error: "無効な終了日です" },
+            { status: StatusCodes.BAD_REQUEST }
+          );
+        }
+        where.date.lte = endDate;
       }
     }
 
-    if (minAmount || maxAmount) {
+    // 数値バリデーション
+    if (minAmountStr || maxAmountStr) {
       where.amount = {};
-      if (minAmount) {
-        where.amount.gte = parseFloat(minAmount);
+      if (minAmountStr) {
+        const minAmount = parseFloat(minAmountStr);
+        if (isNaN(minAmount) || minAmount < 0) {
+          return NextResponse.json(
+            { error: "最小金額は0以上の数値である必要があります" },
+            { status: StatusCodes.BAD_REQUEST }
+          );
+        }
+        where.amount.gte = minAmount;
       }
-      if (maxAmount) {
-        where.amount.lte = parseFloat(maxAmount);
+      if (maxAmountStr) {
+        const maxAmount = parseFloat(maxAmountStr);
+        if (isNaN(maxAmount) || maxAmount < 0) {
+          return NextResponse.json(
+            { error: "最大金額は0以上の数値である必要があります" },
+            { status: StatusCodes.BAD_REQUEST }
+          );
+        }
+        where.amount.lte = maxAmount;
       }
     }
 
-    const offset = searchParams.get("offset");
+    // limitとoffsetのバリデーション
+    let limit: number | undefined;
+    let offset: number | undefined;
+
+    const offsetStr = searchParams.get("offset");
+
+    if (limitStr) {
+      const limitNum = parseInt(limitStr);
+      if (isNaN(limitNum) || limitNum < 1 || limitNum > 1000) {
+        return NextResponse.json(
+          { error: "limitは1から1000の間である必要があります" },
+          { status: StatusCodes.BAD_REQUEST }
+        );
+      }
+      limit = limitNum;
+    }
+
+    if (offsetStr) {
+      const offsetNum = parseInt(offsetStr);
+      if (isNaN(offsetNum) || offsetNum < 0) {
+        return NextResponse.json(
+          { error: "offsetは0以上の整数である必要があります" },
+          { status: StatusCodes.BAD_REQUEST }
+        );
+      }
+      offset = offsetNum;
+    }
 
     const [transactions, totalCount] = await Promise.all([
       prisma.transaction.findMany({
@@ -92,8 +163,8 @@ export async function GET(request: Request) {
           },
         },
         orderBy: { createdAt: "desc" },
-        take: limit ? parseInt(limit) : undefined,
-        skip: offset ? parseInt(offset) : undefined,
+        take: limit,
+        skip: offset,
       }),
       prisma.transaction.count({ where }),
     ]);
@@ -101,7 +172,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ transactions, totalCount });
   } catch (error) {
     console.error("Get transactions error:", error);
-    return NextResponse.json({ error: "トランザクションの取得に失敗しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "トランザクションの取得に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -111,7 +185,7 @@ export async function POST(request: Request) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const body = (await request.json()) as unknown;
@@ -123,13 +197,16 @@ export async function POST(request: Request) {
     });
 
     if (!category) {
-      return NextResponse.json({ error: "カテゴリーが見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "カテゴリーが見つかりません" },
+        { status: StatusCodes.NOT_FOUND }
+      );
     }
 
     if (category.userId !== session.user.id) {
       return NextResponse.json(
         { error: "このカテゴリーを使用する権限がありません" },
-        { status: 403 }
+        { status: StatusCodes.FORBIDDEN }
       );
     }
 
@@ -152,16 +229,26 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ transaction }, { status: 201 });
+    return NextResponse.json({ transaction }, { status: StatusCodes.CREATED });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const fieldErrors = error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
       return NextResponse.json(
-        { error: "入力内容に誤りがあります", details: error.issues },
-        { status: 400 }
+        { error: "入力内容に誤りがあります", fields: fieldErrors },
+        { status: StatusCodes.BAD_REQUEST }
       );
     }
 
-    console.error("Create transaction error:", error);
-    return NextResponse.json({ error: "トランザクションの作成に失敗しました" }, { status: 500 });
+    console.error(
+      "Create transaction error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "トランザクションの作成に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

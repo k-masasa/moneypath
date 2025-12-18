@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { Session } from "next-auth";
+import { StatusCodes } from "http-status-codes";
 
 const updateScheduledPaymentSchema = z.object({
   categoryId: z.string().uuid(),
@@ -18,7 +19,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     // paramsを待機
@@ -33,12 +34,18 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     });
 
     if (!scheduledPayment) {
-      return NextResponse.json({ error: "支払い予定が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "支払い予定が見つかりません" },
+        { status: StatusCodes.NOT_FOUND }
+      );
     }
 
     // 完了済みの支払い予定は削除できない（紐付いたトランザクションがあるため）
     if (scheduledPayment.status === "completed") {
-      return NextResponse.json({ error: "完了済みの支払い予定は削除できません" }, { status: 400 });
+      return NextResponse.json(
+        { error: "完了済みの支払い予定は削除できません" },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     // 支払い予定を削除
@@ -50,8 +57,14 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Scheduled payment DELETE error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error(
+      "Scheduled payment DELETE error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
 
@@ -62,7 +75,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const { id } = await params;
@@ -79,12 +92,18 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
 
     if (!scheduledPayment) {
-      return NextResponse.json({ error: "支払い予定が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "支払い予定が見つかりません" },
+        { status: StatusCodes.NOT_FOUND }
+      );
     }
 
     // 完了済みの支払い予定は編集できない
     if (scheduledPayment.status === "completed") {
-      return NextResponse.json({ error: "完了済みの支払い予定は編集できません" }, { status: 400 });
+      return NextResponse.json(
+        { error: "完了済みの支払い予定は編集できません" },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     // カテゴリーの存在確認
@@ -121,7 +140,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ scheduledPayment: updatedScheduledPayment });
   } catch (error) {
-    console.error("Scheduled payment PUT error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error(
+      "Scheduled payment PUT error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

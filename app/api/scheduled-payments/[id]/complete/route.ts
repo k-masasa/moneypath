@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { Session } from "next-auth";
+import { StatusCodes } from "http-status-codes";
 
 const completePaymentSchema = z.object({
   actualAmount: z.number().positive(),
@@ -14,7 +15,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const session = (await auth()) as Session | null;
 
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const body = (await request.json()) as unknown;
@@ -36,11 +37,17 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     });
 
     if (!scheduledPayment) {
-      return NextResponse.json({ error: "支払い予定が見つかりません" }, { status: 404 });
+      return NextResponse.json(
+        { error: "支払い予定が見つかりません" },
+        { status: StatusCodes.NOT_FOUND }
+      );
     }
 
     if (scheduledPayment.status === "completed") {
-      return NextResponse.json({ error: "既に支払い済みです" }, { status: 400 });
+      return NextResponse.json(
+        { error: "既に支払い済みです" },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     // トランザクションを使用して、支払い記録とトランザクションを同時に作成
@@ -77,7 +84,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Scheduled payment complete error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error(
+      "Scheduled payment complete error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

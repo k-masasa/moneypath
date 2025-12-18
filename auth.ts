@@ -13,8 +13,11 @@ const signInSchema = z.object({
     .max(255, { message: "メールアドレスは255文字以内である必要があります" }),
   password: z
     .string()
-    .min(6, { message: "パスワードは6文字以上である必要があります" })
-    .max(128, { message: "パスワードは128文字以内である必要があります" }),
+    .min(8, { message: "パスワードは8文字以上である必要があります" })
+    .max(128, { message: "パスワードは128文字以内である必要があります" })
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+      message: "パスワードは小文字、大文字、数字を含む必要があります",
+    }),
 });
 
 // NextAuth v5 beta の型定義の問題を回避
@@ -51,7 +54,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: user.name,
           };
         } catch (error) {
-          console.error("Auth error:", error);
+          console.error("Auth error:", error instanceof Error ? error.message : "Unknown error");
           return null;
         }
       },
@@ -59,6 +62,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   pages: {
     signIn: "/auth/signin",
+  },
+  session: {
+    strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30日
+    updateAge: 24 * 60 * 60, // 24時間ごとに更新
+  },
+  jwt: {
+    maxAge: 30 * 24 * 60 * 60, // 30日
   },
   callbacks: {
     jwt({ token, user }: { token: JWT; user?: User }) {

@@ -1,30 +1,64 @@
 import { NextResponse } from "next/server";
+import { StatusCodes } from "http-status-codes";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import type { Session } from "next-auth";
+import { z } from "zod";
 
 export async function GET(request: Request) {
   try {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     const { searchParams } = new URL(request.url);
-    const startDate = searchParams.get("startDate");
-    const endDate = searchParams.get("endDate");
+    const startDateStr = searchParams.get("startDate");
+    const endDateStr = searchParams.get("endDate");
 
-    if (!startDate || !endDate) {
-      return NextResponse.json({ error: "startDateとendDateを指定してください" }, { status: 400 });
+    if (!startDateStr || !endDateStr) {
+      return NextResponse.json(
+        { error: "startDateとendDateを指定してください" },
+        { status: StatusCodes.BAD_REQUEST }
+      );
+    }
+
+    // 日付バリデーション
+    const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      message: "日付はYYYY-MM-DD形式で指定してください",
+    });
+
+    try {
+      dateSchema.parse(startDateStr);
+      dateSchema.parse(endDateStr);
+    } catch {
+      return NextResponse.json(
+        { error: "無効な日付形式です。YYYY-MM-DD形式で指定してください" },
+        { status: StatusCodes.BAD_REQUEST }
+      );
+    }
+
+    const startDate = new Date(startDateStr);
+    const endDate = new Date(endDateStr);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return NextResponse.json({ error: "無効な日付です" }, { status: StatusCodes.BAD_REQUEST });
+    }
+
+    if (startDate > endDate) {
+      return NextResponse.json(
+        { error: "開始日は終了日より前である必要があります" },
+        { status: StatusCodes.BAD_REQUEST }
+      );
     }
 
     const where: Prisma.TransactionWhereInput = {
       userId: session.user.id,
       date: {
-        gte: new Date(startDate),
-        lte: new Date(endDate),
+        gte: startDate,
+        lte: endDate,
       },
     };
 
@@ -135,8 +169,8 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       period: {
-        startDate,
-        endDate,
+        startDate: startDateStr,
+        endDate: endDateStr,
       },
       summary: {
         totalIncome,
@@ -150,6 +184,9 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Get analytics error:", error);
-    return NextResponse.json({ error: "統計情報の取得に失敗しました" }, { status: 500 });
+    return NextResponse.json(
+      { error: "統計情報の取得に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }

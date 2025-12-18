@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { StatusCodes } from "http-status-codes";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import type { Session } from "next-auth";
@@ -8,7 +9,7 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const session = (await auth()) as Session | null;
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: StatusCodes.UNAUTHORIZED });
     }
 
     // 過去12ヶ月の開始日と終了日を計算
@@ -95,7 +96,13 @@ export async function GET() {
       categories: categoryNames,
     });
   } catch (error) {
-    console.error("Stacked area data API error:", error);
-    return NextResponse.json({ error: "データの取得に失敗しました" }, { status: 500 });
+    console.error(
+      "Stacked area data API error:",
+      error instanceof Error ? error.message : "Unknown error"
+    );
+    return NextResponse.json(
+      { error: "データの取得に失敗しました" },
+      { status: StatusCodes.INTERNAL_SERVER_ERROR }
+    );
   }
 }
