@@ -1,1 +1,7 @@
+# schema.prismaが変更されていたらPrismaクライアントを再生成
+if git diff --cached --name-only | grep -q "prisma/schema.prisma"; then
+  echo "schema.prisma changed, regenerating Prisma client..."
+  npx prisma generate
+fi
+
 npx lint-staged
