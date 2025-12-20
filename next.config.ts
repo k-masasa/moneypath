@@ -42,6 +42,7 @@ const nextConfig: NextConfig = {
               "img-src 'self' data: blob:; " +
               "font-src 'self' data:; " +
               "connect-src 'self'; " +
+              "worker-src 'self' blob:; " + // canvas-confettiのWebWorker用
               "frame-ancestors 'none'; " + // iframeでの埋め込みを防ぐ
               "base-uri 'self'; " +
               "form-action 'self';",

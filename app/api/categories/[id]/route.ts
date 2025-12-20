@@ -8,8 +8,6 @@ import type { Session } from "next-auth";
 const categoryUpdateSchema = z.object({
   name: z.string().min(1).optional(),
   type: z.enum(["income", "expense"]).optional(),
-  color: z.string().optional(),
-  icon: z.string().optional(),
   order: z.number().int().optional(),
   isPublicBurden: z.boolean().optional(),
   parentCategoryId: z.string().nullable().optional(),

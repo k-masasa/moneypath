@@ -14,8 +14,6 @@ const categorySchema = z.object({
   type: z.enum(["income", "expense"], {
     message: "タイプは income または expense である必要があります",
   }),
-  color: z.string().max(20, { message: "カラーコードは20文字以内である必要があります" }).optional(),
-  icon: z.string().max(50, { message: "アイコン名は50文字以内である必要があります" }).optional(),
   order: z.number().int().optional(),
   isPublicBurden: z.boolean().optional(),
   parentCategoryId: z
