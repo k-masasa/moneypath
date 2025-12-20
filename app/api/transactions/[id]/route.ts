@@ -73,8 +73,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             id: true,
             name: true,
             type: true,
-            color: true,
-            icon: true,
           },
         },
       },

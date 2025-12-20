@@ -78,7 +78,6 @@ export async function GET(request: Request) {
         categoryId: string;
         categoryName: string;
         categoryType: string;
-        categoryIcon?: string;
         totalAmount: number;
         count: number;
       }
@@ -92,7 +91,6 @@ export async function GET(request: Request) {
           categoryId: transaction.category.id,
           categoryName: transaction.category.name,
           categoryType: transaction.category.type,
-          categoryIcon: transaction.category.icon || undefined,
           totalAmount: 0,
           count: 0,
         };
