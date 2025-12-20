@@ -1,0 +1,104 @@
+name: Slack Notification
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    types: [opened, closed, reopened]
+  issues:
+    types: [opened, closed, reopened]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set event details
+        id: event
+        run: |
+          EVENT_TYPE="${{ github.event_name }}"
+          REPO="${{ github.repository }}"
+          ACTOR="${{ github.actor }}"
+
+          case "$EVENT_TYPE" in
+            push)
+              EMOJI=":rocket:"
+              ACTION="pushed to"
+              TARGET="${{ github.ref_name }}"
+              URL="${{ github.event.compare }}"
+              TITLE="Push to ${TARGET}"
+              ;;
+            pull_request)
+              EMOJI=":git-pull-request:"
+              PR_ACTION="${{ github.event.action }}"
+              PR_NUMBER="${{ github.event.pull_request.number }}"
+              PR_TITLE="${{ github.event.pull_request.title }}"
+              URL="${{ github.event.pull_request.html_url }}"
+
+              if [ "$PR_ACTION" = "closed" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+                EMOJI=":merged:"
+                ACTION="merged"
+                TITLE="PR #${PR_NUMBER} merged: ${PR_TITLE}"
+              elif [ "$PR_ACTION" = "closed" ]; then
+                ACTION="closed"
+                TITLE="PR #${PR_NUMBER} closed: ${PR_TITLE}"
+              elif [ "$PR_ACTION" = "reopened" ]; then
+                ACTION="reopened"
+                TITLE="PR #${PR_NUMBER} reopened: ${PR_TITLE}"
+              else
+                ACTION="opened"
+                TITLE="PR #${PR_NUMBER} opened: ${PR_TITLE}"
+              fi
+              ;;
+            issues)
+              EMOJI=":issue-opened:"
+              ISSUE_ACTION="${{ github.event.action }}"
+              ISSUE_NUMBER="${{ github.event.issue.number }}"
+              ISSUE_TITLE="${{ github.event.issue.title }}"
+              URL="${{ github.event.issue.html_url }}"
+
+              if [ "$ISSUE_ACTION" = "closed" ]; then
+                EMOJI=":issue-closed:"
+                ACTION="closed"
+              elif [ "$ISSUE_ACTION" = "reopened" ]; then
+                ACTION="reopened"
+              else
+                ACTION="opened"
+              fi
+              TITLE="Issue #${ISSUE_NUMBER} ${ACTION}: ${ISSUE_TITLE}"
+              ;;
+          esac
+
+          echo "emoji=${EMOJI}" >> $GITHUB_OUTPUT
+          echo "title=${TITLE}" >> $GITHUB_OUTPUT
+          echo "url=${URL}" >> $GITHUB_OUTPUT
+          echo "actor=${ACTOR}" >> $GITHUB_OUTPUT
+          echo "repo=${REPO}" >> $GITHUB_OUTPUT
+
+      - name: Send Slack notification
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ steps.event.outputs.emoji }} *<${{ steps.event.outputs.url }}|${{ steps.event.outputs.title }}>*"
+                  }
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": ":bust_in_silhouette: ${{ steps.event.outputs.actor }} | :file_folder: ${{ steps.event.outputs.repo }}"
+                    }
+                  ]
+                }
+              ]
+            }
