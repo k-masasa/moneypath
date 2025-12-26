@@ -41,9 +41,16 @@ type CategoryStat = {
   count: number;
 };
 
+type DailyStat = {
+  date: string;
+  income: number;
+  expense: number;
+};
+
 type AnalyticsResponse = {
   summary: MonthlyStats;
   categoryStats: CategoryStat[];
+  dailyStats: DailyStat[];
 };
 
 type PieChartEntry = {
@@ -84,6 +91,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
     transactionCount: 0,
   });
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([]);
+  const [dailyStats, setDailyStats] = useState<DailyStat[]>([]);
   const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
@@ -134,6 +142,7 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
         const data = (await response.json()) as AnalyticsResponse;
         setStats(data.summary);
         setCategoryStats(data.categoryStats || []);
+        setDailyStats(data.dailyStats || []);
       }
     } catch (error) {
       console.error("Failed to fetch monthly stats:", error);
@@ -524,31 +533,85 @@ export function DashboardClient({ userEmail }: DashboardClientProps) {
                 <p className="text-sm mt-2">家計簿入力ページから支出を記録してください</p>
               </div>
             ) : (
-              <div>
-                <h3 className="text-lg font-semibold mb-4">カテゴリー別内訳</h3>
-                <div className="w-full h-[800px] flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={chartExpenseCategories}
-                        dataKey="totalAmount"
-                        nameKey="categoryName"
-                        cx="50%"
-                        cy="50%"
-                        startAngle={90}
-                        endAngle={-270}
-                        label={renderCustomLabel}
-                        labelLine={renderCustomLabelLine}
+              <>
+                {/* 日別支出グラフ */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">日別支出</h3>
+                  <div className="w-full h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={dailyStats}
+                        margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
                       >
-                        {chartExpenseCategories.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={getColor(index)} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                        <XAxis
+                          dataKey="date"
+                          stroke="#666"
+                          tick={{ fill: "#666", fontSize: 10 }}
+                          tickFormatter={(value: string) => {
+                            const day = value.split("-")[2];
+                            return `${parseInt(day)}`;
+                          }}
+                        />
+                        <YAxis
+                          stroke="#666"
+                          tick={{ fill: "#666", fontSize: 10 }}
+                          tickFormatter={(value) => `¥${(value / 1000).toFixed(0)}k`}
+                          width={50}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => formatCurrency(value)}
+                          labelFormatter={(label: string) => {
+                            const [, month, day] = label.split("-");
+                            return `${parseInt(month)}/${parseInt(day)}`;
+                          }}
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "4px",
+                            color: "hsl(var(--card-foreground))",
+                          }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="expense"
+                          stroke="#ef4444"
+                          strokeWidth={2}
+                          dot={{ fill: "#ef4444", r: 3 }}
+                          name="支出"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-              </div>
+
+                {/* カテゴリー別内訳 */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">カテゴリー別内訳</h3>
+                  <div className="w-full h-[800px] flex items-center justify-center">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={chartExpenseCategories}
+                          dataKey="totalAmount"
+                          nameKey="categoryName"
+                          cx="50%"
+                          cy="50%"
+                          startAngle={90}
+                          endAngle={-270}
+                          label={renderCustomLabel}
+                          labelLine={renderCustomLabelLine}
+                        >
+                          {chartExpenseCategories.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={getColor(index)} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </>
             )}
           </CardContent>
         </Card>
